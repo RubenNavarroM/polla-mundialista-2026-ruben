@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getMatches } from "@/lib/api-football";
 import { calcLeaderboard } from "@/lib/points";
@@ -63,11 +64,19 @@ export default async function LeaderboardPage() {
     <div className="max-w-2xl mx-auto px-4 py-6">
       <AutoRefresh intervalMs={60000} />
 
-      <div className="mb-6">
-        <h1 className="font-syne text-2xl font-bold text-secondary">Ranking 🏆</h1>
-        <p className="text-text-secondary text-sm mt-1">
-          Se actualiza cada 60 segundos · Marcador exacto 5 pts · Resultado correcto 2 pts
-        </p>
+      <div className="flex items-start justify-between gap-3 mb-6">
+        <div>
+          <h1 className="font-syne text-2xl font-bold text-secondary">Ranking 🏆</h1>
+          <p className="text-text-secondary text-sm mt-1">
+            Se actualiza cada 60 segundos · Exacto 5 pts · Correcto 2 pts
+          </p>
+        </div>
+        <Link
+          href="/reglas"
+          className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-text-secondary bg-surface border border-border px-3 py-2 rounded-xl hover:text-text-primary hover:border-primary/40 transition-colors"
+        >
+          📋 Reglas
+        </Link>
       </div>
 
       {/* Header tabla */}

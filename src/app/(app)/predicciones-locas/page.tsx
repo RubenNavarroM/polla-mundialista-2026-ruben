@@ -9,7 +9,6 @@ import type {
   CrazyAnswerWithProfile,
   CrazyAnswer,
 } from "@/types/database";
-import Link from "next/link";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { CrazyAnswerForm } from "./CrazyAnswerForm";
 import { CrazyCountdown } from "./CrazyCountdown";
@@ -223,19 +222,11 @@ export default async function PrediccionesLocasPage() {
       <AutoRefresh intervalMs={60000} />
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="font-syne text-2xl font-bold text-secondary">Predicciones Locas 🎲</h1>
-          <p className="text-text-secondary text-sm mt-1">
-            Adivina la estadística rara de cada jornada · Hasta 15 pts
-          </p>
-        </div>
-        <Link
-          href="/reglas"
-          className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-text-secondary bg-surface border border-border px-3 py-2 rounded-xl hover:text-text-primary hover:border-primary/40 transition-colors"
-        >
-          📋 Reglas
-        </Link>
+      <div>
+        <h1 className="font-syne text-2xl font-bold text-secondary">Predicciones Locas 🎲</h1>
+        <p className="text-text-secondary text-sm mt-1">
+          Adivina la estadística rara de cada jornada · Hasta 15 pts por jornada
+        </p>
       </div>
 
       {/* Current jornada card */}
