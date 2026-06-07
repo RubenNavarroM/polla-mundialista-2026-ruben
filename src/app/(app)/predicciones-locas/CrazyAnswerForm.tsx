@@ -41,27 +41,25 @@ export function CrazyAnswerForm({ jornadaId, currentValue, question, emoji }: Pr
         <label className="block text-sm font-semibold text-text-primary mb-2">
           {emoji} Tu predicción
         </label>
-        <div className="flex gap-3">
-          <input
-            type="number"
-            min={0}
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value);
-              setSuccess(false);
-            }}
-            placeholder="0"
-            className="flex-1 border-2 border-border rounded-xl px-4 py-3 text-2xl font-bold text-center text-text-primary focus:outline-none focus:border-primary transition-colors tabular-nums"
-            disabled={isPending}
-          />
-          <button
-            type="submit"
-            disabled={isPending || value === ""}
-            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px]"
-          >
-            {isPending ? "Guardando..." : currentValue != null ? "Actualizar" : "Predecir"}
-          </button>
-        </div>
+        <input
+          type="number"
+          min={0}
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setSuccess(false);
+          }}
+          placeholder="0"
+          className="w-full border-2 border-border rounded-xl px-4 py-4 text-4xl font-bold text-center text-text-primary bg-bg focus:outline-none focus:border-primary transition-colors tabular-nums"
+          disabled={isPending}
+        />
+        <button
+          type="submit"
+          disabled={isPending || value === ""}
+          className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isPending ? "Guardando..." : currentValue != null ? "Actualizar predicción" : "Predecir"}
+        </button>
       </div>
 
       {error && (
