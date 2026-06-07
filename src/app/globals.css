@@ -4,24 +4,35 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground: #0D1B2A;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-2xl border border-border shadow-card p-4;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white font-semibold px-6 py-3 rounded-xl hover:bg-primary/90 transition-colors active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white font-semibold px-6 py-3 rounded-xl hover:bg-secondary/90 transition-colors active:scale-95;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary text-primary font-semibold px-6 py-3 rounded-xl hover:bg-primary/5 transition-colors active:scale-95;
   }
 }

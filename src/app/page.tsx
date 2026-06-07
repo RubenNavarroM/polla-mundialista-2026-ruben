@@ -1,101 +1,66 @@
-import Image from "next/image";
+import Link from "next/link";
+import { CountdownTimer } from "@/components/CountdownTimer";
+
+const FIRST_MATCH = "2026-06-11T19:00:00Z";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <main className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+      {/* Campo de fútbol decorativo */}
+      <div className="absolute inset-0 pointer-events-none select-none">
+        <svg className="absolute bottom-0 w-full opacity-[0.035]" viewBox="0 0 800 400" fill="none">
+          <rect width="800" height="400" fill="#002868" />
+          <rect x="40" y="40" width="720" height="320" stroke="#fff" strokeWidth="4" fill="none" />
+          <circle cx="400" cy="200" r="60" stroke="#fff" strokeWidth="4" fill="none" />
+          <line x1="400" y1="40" x2="400" y2="360" stroke="#fff" strokeWidth="4" />
+          <rect x="40" y="140" width="100" height="120" stroke="#fff" strokeWidth="4" fill="none" />
+          <rect x="660" y="140" width="100" height="120" stroke="#fff" strokeWidth="4" fill="none" />
+          <circle cx="400" cy="200" r="4" fill="#fff" />
+        </svg>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+        <div className="w-full max-w-sm space-y-6">
+          {/* Logo */}
+          <div className="text-center">
+            <div className="text-7xl mb-4 animate-bounce" style={{ animationDuration: "2s" }}>⚽</div>
+            <h1 className="font-syne text-4xl font-bold text-secondary leading-tight">
+              Polla<br />Mundialista
+            </h1>
+            <p className="font-syne text-lg font-semibold text-primary mt-1">
+              FIFA World Cup 2026
+            </p>
+            <p className="text-text-secondary text-sm mt-2">
+              🇺🇸 USA · 🇨🇦 Canada · 🇲🇽 Mexico
+            </p>
+          </div>
+
+          {/* Countdown */}
+          <CountdownTimer
+            targetDate={FIRST_MATCH}
+            label="Para el primer partido · México vs Sudáfrica"
+          />
+
+          {/* Puntos */}
+          <div className="grid grid-cols-2 gap-2 text-center">
+            {[
+              { pts: "5 pts", label: "Marcador exacto 🎯" },
+              { pts: "2 pts", label: "Resultado correcto ✓" },
+              { pts: "10 pts", label: "Campeón 🏆" },
+              { pts: "5 pts", label: "Subcampeón 🥈" },
+            ].map(({ pts, label }) => (
+              <div key={label} className="bg-surface rounded-xl px-3 py-2">
+                <p className="font-syne font-bold text-primary text-sm">{pts}</p>
+                <p className="text-text-secondary text-xs">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          <Link href="/auth" className="btn-primary block text-center text-lg py-4">
+            Entrar a jugar 🚀
+          </Link>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }
