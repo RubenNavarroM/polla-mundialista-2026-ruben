@@ -7,8 +7,8 @@ import { signOut } from "@/app/auth/actions";
 const links = [
   { href: "/partidos", label: "Partidos", icon: "⚽" },
   { href: "/leaderboard", label: "Ranking", icon: "🏆" },
+  { href: "/predicciones-locas", label: "Locas", icon: "🎲" },
   { href: "/grupos", label: "Grupos", icon: "📊" },
-  { href: "/bracket", label: "Bracket", icon: "🗂️" },
   { href: "/perfil", label: "Perfil", icon: "👤" },
 ];
 

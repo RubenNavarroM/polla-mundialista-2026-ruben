@@ -6,6 +6,7 @@ import { signOut } from "@/app/auth/actions";
 import { EditUsernameForm } from "./EditUsernameForm";
 import { AvatarForm } from "./AvatarForm";
 import { ShareButton } from "@/components/ShareButton";
+import type { CrazyJornadaWithQuestion } from "@/types/database";
 
 const stageLabels: Record<string, string> = {
   group: "Grupos",
@@ -22,11 +23,41 @@ export default async function PerfilPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth");
 
-  const [{ data: profile }, { data: predictions }, matches] = await Promise.all([
+  const [{ data: profile }, { data: predictions }, matches, { data: rawCrazyAnswers }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase.from("predictions").select("*").eq("user_id", user.id),
     getMatches(),
+    supabase
+      .from("crazy_answers")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("submitted_at", { ascending: false }),
   ]);
+
+  const crazyAnswersList = rawCrazyAnswers ?? [];
+  const jornadaIds = crazyAnswersList.map((a) => a.jornada_id);
+  let crazyJornadasMap: Map<string, CrazyJornadaWithQuestion> = new Map();
+
+  if (jornadaIds.length > 0) {
+    const { data: jornadas } = await supabase
+      .from("crazy_jornadas")
+      .select("*, crazy_questions(*)")
+      .in("id", jornadaIds);
+    crazyJornadasMap = new Map(
+      ((jornadas ?? []) as unknown as CrazyJornadaWithQuestion[]).map((j) => [j.id, j])
+    );
+  }
+
+  const crazyAnswers = crazyAnswersList.map((a) => ({
+    ...a,
+    jornada: crazyJornadasMap.get(a.jornada_id) ?? null,
+  }));
+
+  const crazyTotalPoints = crazyAnswers.reduce((sum, a) => sum + (a.points ?? 0), 0);
+  const crazyParticipated = crazyAnswers.length;
+  const crazyExact = crazyAnswers.filter(
+    (a) => a.jornada?.real_value !== null && a.jornada?.real_value !== undefined && a.value === a.jornada.real_value
+  ).length;
 
   if (!profile) redirect("/auth/username");
 
@@ -109,6 +140,90 @@ export default async function PerfilPage() {
             <p className="text-text-secondary text-xs mt-0.5">{label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Predicciones Locas stats */}
+      <div>
+        <h2 className="font-syne text-lg font-bold text-secondary mb-3 flex items-center gap-2">
+          🎲 Predicciones Locas
+        </h2>
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {[
+            { label: "Pts. Locas", value: crazyTotalPoints, color: "text-primary" },
+            { label: "Jornadas", value: crazyParticipated, color: "text-secondary" },
+            { label: "Exactas 🎯", value: crazyExact, color: "text-success" },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="card text-center py-4">
+              <p className={`font-syne text-2xl font-bold ${color}`}>{value}</p>
+              <p className="text-text-secondary text-xs mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+
+        {crazyAnswers.length === 0 ? (
+          <div className="card text-center py-6">
+            <p className="text-2xl mb-2">🎲</p>
+            <p className="text-text-secondary text-sm">
+              Aún no has participado en ninguna Predicción Loca
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {crazyAnswers.map((ans) => {
+              const jornada = ans.jornada;
+              const question = jornada?.crazy_questions;
+              const isFinished = jornada?.real_value !== null;
+              const diff = isFinished ? Math.abs(ans.value - jornada!.real_value!) : null;
+              return (
+                <div
+                  key={ans.id}
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-border bg-white"
+                >
+                  <span className="text-xl">{question?.emoji ?? "🎲"}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-text-primary truncate">
+                      {question?.question ?? "Pregunta"}
+                    </p>
+                    <p className="text-xs text-text-secondary">
+                      {jornada?.jornada_date
+                        ? new Date(jornada.jornada_date + "T12:00:00Z").toLocaleDateString("es-ES", {
+                            day: "numeric",
+                            month: "short",
+                          })
+                        : ""}
+                    </p>
+                  </div>
+                  <div className="text-center flex-shrink-0">
+                    <p className="text-xs text-text-secondary">Mi pred.</p>
+                    <p className="font-syne font-bold text-lg text-text-primary">{ans.value}</p>
+                  </div>
+                  {isFinished && (
+                    <div className="text-center flex-shrink-0">
+                      <p className="text-xs text-text-secondary">Real</p>
+                      <p className="font-syne font-bold text-lg text-secondary">{jornada!.real_value}</p>
+                    </div>
+                  )}
+                  <div className="text-right flex-shrink-0">
+                    {isFinished ? (
+                      <>
+                        {diff !== null && (
+                          <p className="text-xs text-text-secondary">
+                            {diff === 0 ? "🎯 Exacto" : `±${diff}`}
+                          </p>
+                        )}
+                        <p className={`font-syne font-bold text-sm ${ans.points > 0 ? "text-success" : "text-text-secondary"}`}>
+                          +{ans.points} pts
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-text-secondary">Pendiente</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Lista de predicciones */}

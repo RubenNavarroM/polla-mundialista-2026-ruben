@@ -31,7 +31,7 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  const protectedRoutes = ["/partidos", "/bracket", "/leaderboard", "/perfil"];
+  const protectedRoutes = ["/partidos", "/bracket", "/leaderboard", "/perfil", "/predicciones-locas"];
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
 
   if (!user && isProtected) {
