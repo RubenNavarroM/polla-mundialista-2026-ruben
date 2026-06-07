@@ -21,7 +21,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-bg flex flex-col">
       {/* Campo de fútbol decorativo */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <svg
@@ -62,7 +62,7 @@ export default function AuthPage() {
                 onClick={() => { setMode("login"); setError(""); }}
                 className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
                   mode === "login"
-                    ? "bg-white text-secondary shadow-sm"
+                    ? "bg-bg text-secondary shadow-sm"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
               >
@@ -72,7 +72,7 @@ export default function AuthPage() {
                 onClick={() => { setMode("register"); setError(""); }}
                 className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
                   mode === "register"
-                    ? "bg-white text-secondary shadow-sm"
+                    ? "bg-bg text-secondary shadow-sm"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
               >

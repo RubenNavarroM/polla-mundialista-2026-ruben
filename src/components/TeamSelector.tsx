@@ -40,7 +40,7 @@ export function TeamSelector({ name, teams, value, onChange, placeholder = "Elig
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-border bg-white hover:border-primary/40 transition text-left"
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-border bg-bg hover:border-primary/40 transition text-left"
       >
         {selected ? (
           <>
@@ -67,7 +67,7 @@ export function TeamSelector({ name, teams, value, onChange, placeholder = "Elig
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-border rounded-xl shadow-card-hover overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full bg-bg border border-border rounded-xl shadow-card-hover overflow-hidden">
           <div className="p-2 border-b border-border">
             <input
               type="text"

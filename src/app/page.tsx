@@ -5,7 +5,7 @@ const FIRST_MATCH = "2026-06-11T19:00:00Z";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+    <main className="min-h-screen bg-bg flex flex-col relative overflow-hidden">
       {/* Campo de fútbol decorativo */}
       <div className="absolute inset-0 pointer-events-none select-none">
         <svg className="absolute bottom-0 w-full opacity-[0.035]" viewBox="0 0 800 400" fill="none">
