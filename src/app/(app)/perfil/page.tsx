@@ -6,6 +6,7 @@ import { signOut } from "@/app/auth/actions";
 import { EditUsernameForm } from "./EditUsernameForm";
 import { AvatarForm } from "./AvatarForm";
 import { ShareButton } from "@/components/ShareButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { CrazyJornadaWithQuestion } from "@/types/database";
 
 const stageLabels: Record<string, string> = {
@@ -127,6 +128,12 @@ export default async function PerfilPage() {
         <ShareButton />
       </div>
 
+      {/* Apariencia — solo visible en mobile (desktop tiene el toggle en la navbar) */}
+      <div className="card md:hidden">
+        <p className="font-semibold text-text-primary text-sm mb-3">🎨 Apariencia</p>
+        <ThemeToggle variant="cards" />
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
@@ -177,7 +184,7 @@ export default async function PerfilPage() {
               return (
                 <div
                   key={ans.id}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-border bg-white"
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-border bg-bg"
                 >
                   <span className="text-xl">{question?.emoji ?? "🎲"}</span>
                   <div className="flex-1 min-w-0">

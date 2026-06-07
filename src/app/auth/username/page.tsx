@@ -25,7 +25,7 @@ export default function UsernamePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-bg flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🎮</div>

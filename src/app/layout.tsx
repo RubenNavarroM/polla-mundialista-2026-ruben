@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Syne, DM_Sans } from "next/font/google";
 import { ToastProvider } from "@/components/Toast";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
 const syne = Syne({
@@ -23,15 +24,30 @@ export const metadata: Metadata = {
   },
 };
 
+/* Prevents flash of wrong theme on initial load */
+const themeScript = `
+(function(){
+  var t=localStorage.getItem('theme')||'system';
+  var d=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if(t==='dark'||(t==='system'&&d)){document.documentElement.classList.add('dark');}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={`${syne.variable} ${dmSans.variable} antialiased bg-white text-text-primary`}>
-        <ToastProvider>{children}</ToastProvider>
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        {/* Inline script runs synchronously before paint to avoid theme flash */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className={`${syne.variable} ${dmSans.variable} antialiased bg-bg text-text-primary`}>
+        <ThemeProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

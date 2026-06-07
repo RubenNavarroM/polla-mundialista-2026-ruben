@@ -77,7 +77,7 @@ export function MatchListClient({ matches, predMap }: Props) {
             className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition flex-shrink-0 ${
               filter === key
                 ? "bg-secondary text-white"
-                : "bg-white border border-border text-text-secondary hover:text-text-primary"
+                : "bg-bg border border-border text-text-secondary hover:text-text-primary"
             }`}
           >
             {label}

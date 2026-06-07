@@ -357,7 +357,7 @@ export default async function PrediccionesLocasPage() {
                           <div
                             key={ans.id}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition ${
-                              isMe ? "border-primary/30 bg-primary/5" : "border-border bg-white"
+                              isMe ? "border-primary/30 bg-primary/5" : "border-border bg-bg"
                             }`}
                           >
                             <span className="text-lg">{ans.profiles?.avatar_url ?? "👤"}</span>
@@ -452,7 +452,7 @@ export default async function PrediccionesLocasPage() {
                           <div
                             key={ans.id}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
-                              isMe ? "border-primary/30 bg-primary/5" : "border-border bg-white"
+                              isMe ? "border-primary/30 bg-primary/5" : "border-border bg-bg"
                             }`}
                           >
                             <span className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold ${

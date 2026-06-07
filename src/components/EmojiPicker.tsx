@@ -26,10 +26,10 @@ export function EmojiPicker({ value, onChange }: Props) {
       >
         {value || "😀"}
       </button>
-      <span className="absolute -bottom-1 -right-1 text-xs bg-white border border-border rounded-full w-5 h-5 flex items-center justify-center">✏️</span>
+      <span className="absolute -bottom-1 -right-1 text-xs bg-bg border border-border rounded-full w-5 h-5 flex items-center justify-center">✏️</span>
 
       {open && (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-border rounded-2xl shadow-card-hover p-3 grid grid-cols-5 gap-1.5 w-52">
+        <div className="absolute top-full left-0 mt-2 z-50 bg-bg border border-border rounded-2xl shadow-card-hover p-3 grid grid-cols-5 gap-1.5 w-52">
           {EMOJIS.map((e) => (
             <button
               key={e}
