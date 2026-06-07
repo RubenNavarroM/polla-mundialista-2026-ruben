@@ -50,13 +50,13 @@ export function CrazyAnswerForm({ jornadaId, currentValue, question, emoji }: Pr
             setSuccess(false);
           }}
           placeholder="0"
-          className="w-full border-2 border-border rounded-2xl px-6 py-6 text-5xl font-bold text-center text-text-primary bg-bg focus:outline-none focus:border-primary transition-colors tabular-nums"
+          className="w-full border-2 border-border rounded-xl px-4 py-3 text-base text-text-primary bg-bg focus:outline-none focus:border-primary transition-colors tabular-nums"
           disabled={isPending}
         />
         <button
           type="submit"
           disabled={isPending || value === ""}
-          className="w-full bg-primary text-white font-semibold px-6 py-4 rounded-2xl hover:bg-primary/90 transition-colors active:scale-95 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full mt-3 bg-primary text-white font-semibold px-4 py-3 rounded-xl hover:bg-primary/90 transition-colors active:scale-95 text-base disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? "Guardando..." : currentValue != null ? "Actualizar predicción" : "Predecir"}
         </button>
