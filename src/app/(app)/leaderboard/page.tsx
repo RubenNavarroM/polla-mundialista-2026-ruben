@@ -3,9 +3,17 @@ import { createClient } from "@/lib/supabase/server";
 import { getMatches } from "@/lib/api-football";
 import { calcLeaderboard } from "@/lib/points";
 import { LeaderboardTable } from "@/components/LeaderboardTable";
+import { GroupMiniRanking } from "@/components/GroupMiniRanking";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import type { UserScore } from "@/lib/points";
 
 export const revalidate = 60;
+
+interface GroupRanking {
+  groupId: string;
+  groupName: string;
+  scores: UserScore[];
+}
 
 async function getLeaderboardData() {
   const supabase = await createClient();
@@ -26,7 +34,6 @@ async function getLeaderboardData() {
 
   const finishedMatches = matches.filter((m) => m.status === "finished");
 
-  // Campeón: el equipo que ganó la final
   const final = finishedMatches.find((m) => m.stage === "final");
   let champion: string | null = null;
   let runnerUp: string | null = null;
@@ -49,16 +56,67 @@ async function getLeaderboardData() {
     runnerUp
   );
 
-  // Mapa de campeones elegidos por usuario
   const championMap = new Map(
     (brackets ?? []).map((b) => [b.user_id, b.champion_team ?? ""])
   );
 
-  return { scores, currentUserId: user?.id ?? "", championMap };
+  const userId = user?.id ?? "";
+  let groupRankings: GroupRanking[] = [];
+  let groupMemberIds: string[] = [];
+
+  if (userId) {
+    const { data: myMemberships } = await supabase
+      .from("group_members")
+      .select("group_id")
+      .eq("user_id", userId)
+      .eq("status", "approved");
+
+    const myGroupIds = (myMemberships ?? []).map((m) => m.group_id);
+
+    if (myGroupIds.length > 0) {
+      const [{ data: groupsData }, { data: allMembersData }] = await Promise.all([
+        supabase
+          .from("private_groups")
+          .select("id, name")
+          .in("id", myGroupIds)
+          .eq("status", "active"),
+        supabase
+          .from("group_members")
+          .select("group_id, user_id")
+          .in("group_id", myGroupIds)
+          .eq("status", "approved"),
+      ]);
+
+      const groupMembersMap = new Map<string, Set<string>>();
+      for (const m of allMembersData ?? []) {
+        if (!groupMembersMap.has(m.group_id)) groupMembersMap.set(m.group_id, new Set());
+        groupMembersMap.get(m.group_id)!.add(m.user_id);
+      }
+
+      const allMemberSet = new Set<string>();
+      Array.from(groupMembersMap.values()).forEach((members) => {
+        Array.from(members).forEach((id) => {
+          if (id !== userId) allMemberSet.add(id);
+        });
+      });
+      groupMemberIds = Array.from(allMemberSet);
+
+      groupRankings = (groupsData ?? []).map((group) => {
+        const memberIds = groupMembersMap.get(group.id) ?? new Set<string>();
+        const groupScores = scores
+          .filter((s) => memberIds.has(s.user_id))
+          .map((s, idx) => ({ ...s, rank: idx + 1 }));
+        return { groupId: group.id, groupName: group.name, scores: groupScores };
+      });
+    }
+  }
+
+  return { scores, currentUserId: userId, championMap, groupRankings, groupMemberIds };
 }
 
 export default async function LeaderboardPage() {
-  const { scores, currentUserId, championMap } = await getLeaderboardData();
+  const { scores, currentUserId, championMap, groupRankings, groupMemberIds } =
+    await getLeaderboardData();
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -79,7 +137,33 @@ export default async function LeaderboardPage() {
         </Link>
       </div>
 
-      {/* Header tabla */}
+      {/* Mini-rankings de grupos */}
+      {groupRankings.length > 0 && (
+        <div className={`grid gap-3 mb-6 ${groupRankings.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
+          {groupRankings.map((gr) => (
+            <GroupMiniRanking
+              key={gr.groupId}
+              groupId={gr.groupId}
+              groupName={gr.groupName}
+              scores={gr.scores}
+              currentUserId={currentUserId}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Header tabla global */}
+      <div className="flex items-center gap-2 mb-3">
+        <h2 className="font-syne text-sm font-bold text-text-secondary uppercase tracking-wide">
+          🌍 Ranking Global
+        </h2>
+        {groupMemberIds.length > 0 && (
+          <span className="text-xs text-text-secondary">
+            · <span className="text-success">👥</span> = en tu grupo
+          </span>
+        )}
+      </div>
+
       <div className="flex items-center gap-3 px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wide">
         <div className="w-8 text-center">#</div>
         <div className="w-9" />
@@ -96,7 +180,12 @@ export default async function LeaderboardPage() {
           <p className="text-text-secondary text-sm mt-1">Invita a tus amigos para empezar</p>
         </div>
       ) : (
-        <LeaderboardTable scores={scores} currentUserId={currentUserId} championMap={championMap} />
+        <LeaderboardTable
+          scores={scores}
+          currentUserId={currentUserId}
+          championMap={championMap}
+          groupMemberIds={groupMemberIds}
+        />
       )}
     </div>
   );

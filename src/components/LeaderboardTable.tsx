@@ -7,6 +7,7 @@ interface Props {
   scores: UserScore[];
   currentUserId: string;
   championMap?: Map<string, string>;
+  groupMemberIds?: string[];
 }
 
 const medals = ["🥇", "🥈", "🥉"];
@@ -33,8 +34,9 @@ function Avatar({ avatarUrl, username }: { avatarUrl: string | null; username: s
   );
 }
 
-export function LeaderboardTable({ scores, currentUserId, championMap }: Props) {
+export function LeaderboardTable({ scores, currentUserId, championMap, groupMemberIds }: Props) {
   const [highlighted, setHighlighted] = useState<string | null>(null);
+  const groupSet = new Set(groupMemberIds ?? []);
 
   useEffect(() => {
     setHighlighted(currentUserId);
@@ -82,6 +84,9 @@ export function LeaderboardTable({ scores, currentUserId, championMap }: Props) 
               <p className={`font-semibold truncate text-sm ${isMe ? "text-primary" : "text-text-primary"}`}>
                 {entry.username}
                 {isMe && <span className="text-xs font-normal text-text-secondary ml-1">(tú)</span>}
+                {!isMe && groupSet.has(entry.user_id) && (
+                  <span className="ml-1.5 text-xs text-success font-normal">👥</span>
+                )}
               </p>
               {championMap?.get(entry.user_id) && (
                 <p className="text-xs text-text-secondary truncate">
