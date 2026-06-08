@@ -134,6 +134,19 @@ export default async function PerfilPage() {
         <ThemeToggle variant="cards" />
       </div>
 
+      {/* Mis grupos — acceso desde móvil */}
+      <a
+        href="/mis-grupos"
+        className="card md:hidden flex items-center gap-3 hover:border-primary/40 transition-colors"
+      >
+        <span className="text-2xl">👥</span>
+        <div className="flex-1">
+          <p className="font-semibold text-text-primary text-sm">Mis grupos</p>
+          <p className="text-xs text-text-secondary">Compite en grupos privados con amigos</p>
+        </div>
+        <span className="text-text-secondary">→</span>
+      </a>
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
