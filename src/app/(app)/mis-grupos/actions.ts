@@ -26,9 +26,16 @@ export async function createGroup(name: string, description: string): Promise<{ 
   const count = await countActiveMemberships(supabase, user.id);
   if (count >= MAX_GROUPS) return { error: `Solo puedes pertenecer a un máximo de ${MAX_GROUPS} grupos` };
 
+  const isAppAdmin = user.email === process.env.ADMIN_EMAIL;
+
   const { data: group, error: groupError } = await supabase
     .from("private_groups")
-    .insert({ name: trimmedName, description: description.trim(), created_by: user.id })
+    .insert({
+      name: trimmedName,
+      description: description.trim(),
+      created_by: user.id,
+      status: isAppAdmin ? "active" : "pending",
+    })
     .select("id")
     .single();
 
