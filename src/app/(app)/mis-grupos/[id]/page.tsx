@@ -33,13 +33,28 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
 
   const isGroupAdmin = myMembership.role === "admin";
 
+  // Query miembros sin join embebido
   const { data: rawMembers } = await supabase
     .from("group_members")
-    .select("*, profiles(*)")
+    .select("*")
     .eq("group_id", id)
     .order("joined_at", { ascending: true });
 
-  const allMembers = (rawMembers ?? []) as unknown as GroupMemberWithProfile[];
+  const memberIds = (rawMembers ?? []).map((m) => m.user_id);
+  let profilesForMembers: { id: string; username: string; avatar_url: string | null }[] = [];
+  if (memberIds.length > 0) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, username, avatar_url")
+      .in("id", memberIds);
+    profilesForMembers = data ?? [];
+  }
+  const profileMap = new Map(profilesForMembers.map((p) => [p.id, p]));
+
+  const allMembers: GroupMemberWithProfile[] = (rawMembers ?? []).map((m) => ({
+    ...(m as unknown as import("@/types/database").GroupMember),
+    profiles: profileMap.get(m.user_id) ?? { username: "Usuario", avatar_url: null },
+  }));
   const approvedMembers = allMembers.filter((m) => m.status === "approved");
   const pendingMembers = allMembers.filter((m) => m.status === "pending");
 

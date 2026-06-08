@@ -6,10 +6,6 @@ import { JoinGroupForm } from "./JoinGroupForm";
 import { PendingGroupsAdmin } from "./PendingGroupsAdmin";
 import type { PrivateGroup, GroupMember } from "@/types/database";
 
-interface MembershipWithGroup extends GroupMember {
-  private_groups: PrivateGroup;
-}
-
 interface PendingGroupWithProfile extends PrivateGroup {
   profiles: { username: string };
 }
@@ -33,17 +29,36 @@ export default async function MisGruposPage() {
 
   const isAppAdmin = user.email === process.env.ADMIN_EMAIL;
 
+  // Query 1: membresías del usuario
   const { data: rawMemberships } = await supabase
     .from("group_members")
-    .select("*, private_groups(*)")
+    .select("*")
     .eq("user_id", user.id)
     .neq("status", "rejected")
     .order("joined_at", { ascending: false });
 
-  const memberships = (rawMemberships ?? []) as unknown as MembershipWithGroup[];
-  const myGroups = memberships.filter((m) => m.private_groups != null);
+  const memberships = (rawMemberships ?? []) as GroupMember[];
+
+  // Query 2: grupos correspondientes
+  const groupIds = memberships.map((m) => m.group_id);
+  const groupsMap = new Map<string, PrivateGroup>();
+  if (groupIds.length > 0) {
+    const { data: rawGroups } = await supabase
+      .from("private_groups")
+      .select("*")
+      .in("id", groupIds);
+    for (const g of (rawGroups ?? []) as unknown as PrivateGroup[]) {
+      groupsMap.set(g.id, g);
+    }
+  }
+
+  const myGroups = memberships
+    .map((m) => ({ membership: m, group: groupsMap.get(m.group_id) }))
+    .filter((item): item is { membership: GroupMember; group: PrivateGroup } => item.group != null);
+
   const activeCount = myGroups.length;
 
+  // Grupos pendientes de aprobación (solo para app admin)
   let pendingGroups: PendingGroupWithProfile[] = [];
   if (isAppAdmin) {
     const { data } = await supabase
@@ -63,12 +78,12 @@ export default async function MisGruposPage() {
         </p>
       </div>
 
-      {/* App admin: pending groups */}
+      {/* App admin: grupos pendientes de aprobación */}
       {isAppAdmin && pendingGroups.length > 0 && (
         <PendingGroupsAdmin groups={pendingGroups} />
       )}
 
-      {/* My groups list */}
+      {/* Lista de mis grupos */}
       {myGroups.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-4xl mb-3">👥</p>
@@ -77,21 +92,20 @@ export default async function MisGruposPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {myGroups.map((m) => {
-            const group = m.private_groups;
+          {myGroups.map(({ membership, group }) => {
             const isActive = group.status === "active";
             return (
-              <div key={group.id} className="relative">
+              <div key={group.id}>
                 {isActive ? (
                   <Link
                     href={`/mis-grupos/${group.id}`}
                     className="card flex items-center gap-3 hover:border-primary/40 transition-colors"
                   >
-                    <GroupCard group={group} role={m.role} />
+                    <GroupCard group={group} role={membership.role} />
                   </Link>
                 ) : (
                   <div className="card flex items-center gap-3 opacity-70">
-                    <GroupCard group={group} role={m.role} />
+                    <GroupCard group={group} role={membership.role} />
                   </div>
                 )}
               </div>
@@ -100,7 +114,7 @@ export default async function MisGruposPage() {
         </div>
       )}
 
-      {/* Actions */}
+      {/* Acciones */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <CreateGroupForm disabled={activeCount >= 3} />
         <JoinGroupForm disabled={activeCount >= 3} />
