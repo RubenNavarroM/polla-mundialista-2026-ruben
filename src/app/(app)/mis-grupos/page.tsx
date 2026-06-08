@@ -61,12 +61,24 @@ export default async function MisGruposPage() {
   // Grupos pendientes de aprobación (solo para app admin)
   let pendingGroups: PendingGroupWithProfile[] = [];
   if (isAppAdmin) {
-    const { data } = await supabase
+    const { data: rawPending } = await supabase
       .from("private_groups")
-      .select("*, profiles!created_by(username)")
+      .select("*")
       .eq("status", "pending")
       .order("created_at", { ascending: true });
-    pendingGroups = (data ?? []) as unknown as PendingGroupWithProfile[];
+
+    if (rawPending && rawPending.length > 0) {
+      const creatorIds = rawPending.map((g) => g.created_by);
+      const { data: creators } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", creatorIds);
+      const creatorMap = new Map((creators ?? []).map((p) => [p.id, p.username]));
+      pendingGroups = (rawPending as unknown as PrivateGroup[]).map((g) => ({
+        ...g,
+        profiles: { username: creatorMap.get(g.created_by) ?? "Usuario" },
+      }));
+    }
   }
 
   return (
