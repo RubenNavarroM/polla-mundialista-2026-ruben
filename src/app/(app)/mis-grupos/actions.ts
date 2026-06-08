@@ -154,6 +154,43 @@ export async function rejectMember(memberId: string): Promise<{ error?: string }
   return {};
 }
 
+export async function updateGroup(groupId: string, name: string, description: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const trimmedName = name.trim();
+  if (trimmedName.length < 3) return { error: "El nombre debe tener al menos 3 caracteres" };
+  if (trimmedName.length > 50) return { error: "El nombre no puede superar 50 caracteres" };
+
+  const { error } = await supabase
+    .from("private_groups")
+    .update({ name: trimmedName, description: description.trim() })
+    .eq("id", groupId)
+    .eq("created_by", user.id);
+
+  if (error) return { error: "Error al actualizar el grupo" };
+  revalidatePath("/mis-grupos");
+  revalidatePath(`/mis-grupos/${groupId}`);
+  return {};
+}
+
+export async function deleteGroup(groupId: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const { error } = await supabase
+    .from("private_groups")
+    .delete()
+    .eq("id", groupId)
+    .eq("created_by", user.id);
+
+  if (error) return { error: "Error al eliminar el grupo" };
+  revalidatePath("/mis-grupos");
+  return {};
+}
+
 export async function removeMember(memberId: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

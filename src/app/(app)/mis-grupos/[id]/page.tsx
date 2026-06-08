@@ -4,6 +4,7 @@ import { getMatches } from "@/lib/api-football";
 import { calcLeaderboard } from "@/lib/points";
 import { LeaderboardTable } from "@/components/LeaderboardTable";
 import { GroupMembersPanel } from "../GroupMembersPanel";
+import { GroupAdminActions } from "../GroupAdminActions";
 import type { PrivateGroup, GroupMemberWithProfile } from "@/types/database";
 
 export default async function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -112,6 +113,11 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           </div>
         )}
       </div>
+
+      {/* Acciones del admin del grupo */}
+      {isGroupAdmin && (
+        <GroupAdminActions group={group} />
+      )}
 
       {/* Group admin management panel */}
       {isGroupAdmin && (

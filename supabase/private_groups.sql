@@ -34,6 +34,9 @@ CREATE POLICY "users can create groups" ON private_groups
 CREATE POLICY "creators can update their group" ON private_groups
   FOR UPDATE TO authenticated USING (auth.uid() = created_by);
 
+CREATE POLICY "creators can delete their group" ON private_groups
+  FOR DELETE TO authenticated USING (auth.uid() = created_by);
+
 -- Funciones SECURITY DEFINER para evitar recursión en las policies de group_members
 CREATE OR REPLACE FUNCTION user_is_approved_in_group(p_group_id UUID)
 RETURNS BOOLEAN LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public AS $$
