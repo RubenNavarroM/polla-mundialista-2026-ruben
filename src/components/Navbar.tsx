@@ -15,8 +15,9 @@ const mobileLinks = [
 
 const desktopLinks = [
   ...mobileLinks,
-  { href: "/bracket", label: "Bracket", icon: "🗂️" },
-  { href: "/reglas",  label: "Reglas",  icon: "📋" },
+  { href: "/mis-grupos", label: "Mis grupos", icon: "👥" },
+  { href: "/bracket",    label: "Bracket",    icon: "🗂️" },
+  { href: "/reglas",     label: "Reglas",     icon: "📋" },
 ];
 
 export function Navbar() {

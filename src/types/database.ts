@@ -177,6 +177,63 @@ export type Database = {
         };
         Relationships: [];
       };
+      private_groups: {
+        Row: {
+          id: string;
+          name: string;
+          description: string;
+          created_by: string;
+          invite_code: string;
+          status: "pending" | "active" | "rejected";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string;
+          created_by: string;
+          invite_code?: string;
+          status?: "pending" | "active" | "rejected";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string;
+          created_by?: string;
+          invite_code?: string;
+          status?: "pending" | "active" | "rejected";
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      group_members: {
+        Row: {
+          id: string;
+          group_id: string;
+          user_id: string;
+          role: "admin" | "member";
+          status: "pending" | "approved" | "rejected";
+          joined_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          user_id: string;
+          role?: "admin" | "member";
+          status?: "pending" | "approved" | "rejected";
+          joined_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          user_id?: string;
+          role?: "admin" | "member";
+          status?: "pending" | "approved" | "rejected";
+          joined_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       leaderboard: {
@@ -244,6 +301,31 @@ export interface CrazyAnswerWithProfile extends CrazyAnswer {
 }
 
 export type JornadaStatus = "open" | "locked" | "pending_result" | "finished";
+
+// ——— Grupos Privados ———
+
+export interface PrivateGroup {
+  id: string;
+  name: string;
+  description: string;
+  created_by: string;
+  invite_code: string;
+  status: "pending" | "active" | "rejected";
+  created_at: string;
+}
+
+export interface GroupMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  role: "admin" | "member";
+  status: "pending" | "approved" | "rejected";
+  joined_at: string;
+}
+
+export interface GroupMemberWithProfile extends GroupMember {
+  profiles: { username: string; avatar_url: string | null };
+}
 
 export function getJornadaStatus(
   jornada: CrazyJornada,
