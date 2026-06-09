@@ -2,7 +2,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getMatches } from "@/lib/api-football";
 import { calcLeaderboard } from "@/lib/points";
-import { LeaderboardTable } from "@/components/LeaderboardTable";
 import { GroupMiniRanking } from "@/components/GroupMiniRanking";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import type { UserScore } from "@/lib/points";
@@ -56,13 +55,8 @@ async function getLeaderboardData() {
     runnerUp
   );
 
-  const championMap = new Map(
-    (brackets ?? []).map((b) => [b.user_id, b.champion_team ?? ""])
-  );
-
   const userId = user?.id ?? "";
   let groupRankings: GroupRanking[] = [];
-  let groupMemberIds: string[] = [];
 
   if (userId) {
     const { data: myMemberships } = await supabase
@@ -93,14 +87,6 @@ async function getLeaderboardData() {
         groupMembersMap.get(m.group_id)!.add(m.user_id);
       }
 
-      const allMemberSet = new Set<string>();
-      Array.from(groupMembersMap.values()).forEach((members) => {
-        Array.from(members).forEach((id) => {
-          if (id !== userId) allMemberSet.add(id);
-        });
-      });
-      groupMemberIds = Array.from(allMemberSet);
-
       groupRankings = (groupsData ?? []).map((group) => {
         const memberIds = groupMembersMap.get(group.id) ?? new Set<string>();
         const groupScores = scores
@@ -111,12 +97,11 @@ async function getLeaderboardData() {
     }
   }
 
-  return { scores, currentUserId: userId, championMap, groupRankings, groupMemberIds };
+  return { currentUserId: userId, groupRankings };
 }
 
 export default async function LeaderboardPage() {
-  const { scores, currentUserId, championMap, groupRankings, groupMemberIds } =
-    await getLeaderboardData();
+  const { currentUserId, groupRankings } = await getLeaderboardData();
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -137,9 +122,8 @@ export default async function LeaderboardPage() {
         </Link>
       </div>
 
-      {/* Mini-rankings de grupos */}
-      {groupRankings.length > 0 && (
-        <div className={`grid gap-3 mb-6 ${groupRankings.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
+      {groupRankings.length > 0 ? (
+        <div className={`grid gap-3 ${groupRankings.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
           {groupRankings.map((gr) => (
             <GroupMiniRanking
               key={gr.groupId}
@@ -150,42 +134,18 @@ export default async function LeaderboardPage() {
             />
           ))}
         </div>
-      )}
-
-      {/* Header tabla global */}
-      <div className="flex items-center gap-2 mb-3">
-        <h2 className="font-syne text-sm font-bold text-text-secondary uppercase tracking-wide">
-          🌍 Ranking Global
-        </h2>
-        {groupMemberIds.length > 0 && (
-          <span className="text-xs text-text-secondary">
-            · <span className="text-success">👥</span> = en tu grupo
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-3 px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-        <div className="w-8 text-center">#</div>
-        <div className="w-9" />
-        <div className="flex-1">Jugador</div>
-        <div className="hidden sm:block w-16 text-center">Exactos</div>
-        <div className="hidden sm:block w-16 text-center">Correct.</div>
-        <div className="w-14 text-center">Pts</div>
-      </div>
-
-      {scores.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-4xl mb-3">⏳</p>
-          <p className="font-semibold text-text-primary">Aún no hay jugadores registrados</p>
-          <p className="text-text-secondary text-sm mt-1">Invita a tus amigos para empezar</p>
-        </div>
       ) : (
-        <LeaderboardTable
-          scores={scores}
-          currentUserId={currentUserId}
-          championMap={championMap}
-          groupMemberIds={groupMemberIds}
-        />
+        <div className="text-center py-16">
+          <p className="text-4xl mb-3">👥</p>
+          <p className="font-semibold text-text-primary">No perteneces a ningún grupo</p>
+          <p className="text-text-secondary text-sm mt-1">Únete o crea un grupo para ver el ranking</p>
+          <Link
+            href="/mis-grupos"
+            className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-primary border border-primary/40 px-4 py-2 rounded-xl hover:bg-primary/10 transition-colors"
+          >
+            Ver grupos
+          </Link>
+        </div>
       )}
     </div>
   );
