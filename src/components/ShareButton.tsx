@@ -35,7 +35,7 @@ export function ShareButton({ url }: Props) {
     <div className="flex gap-2">
       <button
         onClick={handleShare}
-        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border bg-white hover:bg-surface transition font-semibold text-sm text-text-primary active:scale-95"
+        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border bg-bg hover:bg-surface transition font-semibold text-sm text-text-primary active:scale-95"
       >
         🔗 Copiar link
       </button>

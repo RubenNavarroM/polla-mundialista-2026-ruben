@@ -87,6 +87,153 @@ export type Database = {
         };
         Relationships: [];
       };
+      crazy_questions: {
+        Row: {
+          id: string;
+          category: string;
+          question: string;
+          stat_key: string;
+          emoji: string;
+          auto_calculable: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          category: string;
+          question: string;
+          stat_key: string;
+          emoji?: string;
+          auto_calculable?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          category?: string;
+          question?: string;
+          stat_key?: string;
+          emoji?: string;
+          auto_calculable?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      crazy_jornadas: {
+        Row: {
+          id: string;
+          jornada_date: string;
+          question_id: string;
+          deadline: string;
+          first_match_at: string;
+          real_value: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          jornada_date: string;
+          question_id: string;
+          deadline: string;
+          first_match_at: string;
+          real_value?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          jornada_date?: string;
+          question_id?: string;
+          deadline?: string;
+          first_match_at?: string;
+          real_value?: number | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      crazy_answers: {
+        Row: {
+          id: string;
+          user_id: string;
+          jornada_id: string;
+          value: number;
+          submitted_at: string;
+          answered_before_deadline: boolean;
+          points: number;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          jornada_id: string;
+          value: number;
+          submitted_at?: string;
+          answered_before_deadline?: boolean;
+          points?: number;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          jornada_id?: string;
+          value?: number;
+          submitted_at?: string;
+          answered_before_deadline?: boolean;
+          points?: number;
+        };
+        Relationships: [];
+      };
+      private_groups: {
+        Row: {
+          id: string;
+          name: string;
+          description: string;
+          created_by: string;
+          invite_code: string;
+          status: "pending" | "active" | "rejected";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string;
+          created_by: string;
+          invite_code?: string;
+          status?: "pending" | "active" | "rejected";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string;
+          created_by?: string;
+          invite_code?: string;
+          status?: "pending" | "active" | "rejected";
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      group_members: {
+        Row: {
+          id: string;
+          group_id: string;
+          user_id: string;
+          role: "admin" | "member";
+          status: "pending" | "approved" | "rejected";
+          joined_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          user_id: string;
+          role?: "admin" | "member";
+          status?: "pending" | "approved" | "rejected";
+          joined_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          user_id?: string;
+          role?: "admin" | "member";
+          status?: "pending" | "approved" | "rejected";
+          joined_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       leaderboard: {
@@ -112,3 +259,86 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Prediction = Database["public"]["Tables"]["predictions"]["Row"];
 export type BracketPrediction = Database["public"]["Tables"]["bracket_predictions"]["Row"];
 export type LeaderboardEntry = Database["public"]["Views"]["leaderboard"]["Row"];
+
+// ——— Predicciones Locas ———
+
+export interface CrazyQuestion {
+  id: string;
+  category: string;
+  question: string;
+  stat_key: string;
+  emoji: string;
+  auto_calculable: boolean;
+  created_at: string;
+}
+
+export interface CrazyJornada {
+  id: string;
+  jornada_date: string;
+  question_id: string;
+  deadline: string;
+  first_match_at: string;
+  real_value: number | null;
+  created_at: string;
+}
+
+export interface CrazyJornadaWithQuestion extends CrazyJornada {
+  crazy_questions: CrazyQuestion;
+}
+
+export interface CrazyAnswer {
+  id: string;
+  user_id: string;
+  jornada_id: string;
+  value: number;
+  submitted_at: string;
+  answered_before_deadline: boolean;
+  points: number;
+}
+
+export interface CrazyAnswerWithProfile extends CrazyAnswer {
+  profiles: { username: string; avatar_url: string | null };
+}
+
+export type JornadaStatus = "open" | "locked" | "pending_result" | "finished";
+
+// ——— Grupos Privados ———
+
+export interface PrivateGroup {
+  id: string;
+  name: string;
+  description: string;
+  created_by: string;
+  invite_code: string;
+  status: "pending" | "active" | "rejected";
+  created_at: string;
+}
+
+export interface GroupMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  role: "admin" | "member";
+  status: "pending" | "approved" | "rejected";
+  joined_at: string;
+}
+
+export interface GroupMemberWithProfile extends GroupMember {
+  profiles: { username: string; avatar_url: string | null };
+}
+
+export function getJornadaStatus(
+  jornada: CrazyJornada,
+  jornadaMatches: { status: string }[]
+): JornadaStatus {
+  const now = new Date();
+  const deadline = new Date(jornada.deadline);
+
+  if (now < deadline) return "open";
+
+  const allFinished = jornadaMatches.length > 0 && jornadaMatches.every((m) => m.status === "finished");
+
+  if (allFinished && jornada.real_value !== null) return "finished";
+  if (allFinished && jornada.real_value === null) return "pending_result";
+  return "locked";
+}

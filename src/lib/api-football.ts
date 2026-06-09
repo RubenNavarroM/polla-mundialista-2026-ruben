@@ -139,3 +139,69 @@ export async function getMatch(id: string): Promise<Match | null> {
   const data = await res.json();
   return mapMatch(data);
 }
+
+export interface MatchGoal {
+  minute: number;
+  type: "REGULAR" | "OWN_GOAL" | "PENALTY" | "MISSED_PENALTY";
+  team: { id: string; name: string };
+}
+
+export interface MatchBooking {
+  minute: number;
+  type: "YELLOW_CARD" | "RED_CARD";
+  team: { id: string; name: string };
+}
+
+export interface MatchSubstitution {
+  minute: number;
+  team: { id: string; name: string };
+}
+
+export interface MatchFullDetail extends Match {
+  goals: MatchGoal[];
+  bookings: MatchBooking[];
+  substitutions: MatchSubstitution[];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapGoal(g: any): MatchGoal {
+  return {
+    minute: g.minute ?? 0,
+    type: g.type ?? "REGULAR",
+    team: { id: String(g.team?.id ?? 0), name: g.team?.name ?? "" },
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapBooking(b: any): MatchBooking {
+  return {
+    minute: b.minute ?? 0,
+    type: b.type ?? "YELLOW_CARD",
+    team: { id: String(b.team?.id ?? 0), name: b.team?.name ?? "" },
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapSubstitution(s: any): MatchSubstitution {
+  return {
+    minute: s.minute ?? 0,
+    team: { id: String(s.team?.id ?? 0), name: s.team?.name ?? "" },
+  };
+}
+
+export async function getMatchFullDetail(id: string): Promise<MatchFullDetail | null> {
+  const res = await fetch(`${BASE_URL}/matches/${id}`, {
+    headers,
+    next: { revalidate: 60 },
+  });
+
+  if (!res.ok) return null;
+  const data = await res.json();
+
+  return {
+    ...mapMatch(data),
+    goals: (data.goals ?? []).map(mapGoal),
+    bookings: (data.bookings ?? []).map(mapBooking),
+    substitutions: (data.substitutions ?? []).map(mapSubstitution),
+  };
+}

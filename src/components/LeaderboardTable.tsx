@@ -7,6 +7,7 @@ interface Props {
   scores: UserScore[];
   currentUserId: string;
   championMap?: Map<string, string>;
+  groupMemberIds?: string[];
 }
 
 const medals = ["🥇", "🥈", "🥉"];
@@ -33,8 +34,9 @@ function Avatar({ avatarUrl, username }: { avatarUrl: string | null; username: s
   );
 }
 
-export function LeaderboardTable({ scores, currentUserId, championMap }: Props) {
+export function LeaderboardTable({ scores, currentUserId, championMap, groupMemberIds }: Props) {
   const [highlighted, setHighlighted] = useState<string | null>(null);
+  const groupSet = new Set(groupMemberIds ?? []);
 
   useEffect(() => {
     setHighlighted(currentUserId);
@@ -60,7 +62,7 @@ export function LeaderboardTable({ scores, currentUserId, championMap }: Props) 
                 ? "border-primary bg-primary/5 shadow-card"
                 : isTop3
                 ? "border-accent/40 bg-accent/5 shadow-card"
-                : "border-border bg-white"
+                : "border-border bg-bg"
             } ${highlighted === entry.user_id ? "scale-[1.01]" : ""}`}
           >
             {/* Posición */}
@@ -82,6 +84,9 @@ export function LeaderboardTable({ scores, currentUserId, championMap }: Props) 
               <p className={`font-semibold truncate text-sm ${isMe ? "text-primary" : "text-text-primary"}`}>
                 {entry.username}
                 {isMe && <span className="text-xs font-normal text-text-secondary ml-1">(tú)</span>}
+                {!isMe && groupSet.has(entry.user_id) && (
+                  <span className="ml-1.5 text-xs text-success font-normal">👥</span>
+                )}
               </p>
               {championMap?.get(entry.user_id) && (
                 <p className="text-xs text-text-secondary truncate">
@@ -114,7 +119,7 @@ export function LeaderboardTable({ scores, currentUserId, championMap }: Props) 
       {/* Sticky: mi posición si estoy fuera del top 10 */}
       {showStickyMe && myEntry && (
         <div className="sticky bottom-4 mt-4">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-primary bg-white shadow-card-hover">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-primary bg-bg shadow-card-hover">
             <div className="w-8 text-center font-syne font-bold text-primary text-sm flex-shrink-0">
               {myEntry.rank}
             </div>

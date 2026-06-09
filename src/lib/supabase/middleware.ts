@@ -31,7 +31,16 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  const protectedRoutes = ["/partidos", "/bracket", "/leaderboard", "/perfil"];
+  // Rutas que requieren estar autenticado
+  const protectedRoutes = [
+    "/partidos",
+    "/bracket",
+    "/leaderboard",
+    "/perfil",
+    "/predicciones-locas",
+    "/mis-grupos",
+    "/auth/grupo",
+  ];
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
 
   if (!user && isProtected) {
@@ -40,9 +49,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users away from /auth but allow /auth/username
+  // Redirect logged-in users away from /auth but allow /auth/username and /auth/grupo
   if (user && pathname === "/auth") {
-    // Check if profile exists; if not, go to username setup
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
@@ -59,6 +67,32 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth";
     return NextResponse.redirect(url);
+  }
+
+  // Para rutas protegidas (excepto /auth/grupo), verificar que el usuario
+  // pertenezca al menos a un grupo (pendiente o activo)
+  const requiresGroup = [
+    "/partidos",
+    "/bracket",
+    "/leaderboard",
+    "/perfil",
+    "/predicciones-locas",
+    "/mis-grupos",
+  ];
+  const needsGroupCheck = user && requiresGroup.some((route) => pathname.startsWith(route));
+
+  if (needsGroupCheck) {
+    const { count } = await supabase
+      .from("group_members")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .neq("status", "rejected");
+
+    if ((count ?? 0) === 0) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/grupo";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

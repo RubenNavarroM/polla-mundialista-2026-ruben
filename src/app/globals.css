@@ -2,14 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ——— Design tokens (RGB channels for Tailwind opacity modifiers) ——— */
 :root {
-  --background: #ffffff;
-  --foreground: #0D1B2A;
+  /* Brand */
+  --color-primary:        178 34 52;        /* #B22234 */
+  --color-secondary:      0 40 104;         /* #002868 */
+  --color-accent:         255 215 0;        /* #FFD700 */
+  /* Surfaces */
+  --color-bg:             255 255 255;      /* #FFFFFF */
+  --color-surface:        244 246 249;      /* #F4F6F9 */
+  --color-border:         226 230 234;      /* #E2E6EA */
+  /* Text */
+  --color-text-primary:   13 27 42;         /* #0D1B2A */
+  --color-text-secondary: 107 114 128;      /* #6B7280 */
+  /* State */
+  --color-success:        22 163 74;        /* #16A34A */
+  --color-error:          220 38 38;        /* #DC2626 */
+  /* Shadow */
+  --shadow-card: 0 1px 4px 0 rgba(13, 27, 42, 0.08);
+  --shadow-card-hover: 0 4px 16px 0 rgba(13, 27, 42, 0.12);
+}
+
+/* ——— Dark mode overrides ——— */
+.dark {
+  --color-primary:        212 78 102;       /* #D44E66 — rojo más vivo */
+  --color-secondary:      96 147 230;       /* #6093E6 — azul más claro */
+  --color-bg:             15 23 42;         /* #0F172A — slate-900 */
+  --color-surface:        28 40 65;         /* #1C2841 */
+  --color-border:         44 62 94;         /* #2C3E5E */
+  --color-text-primary:   237 242 248;      /* #EDF2F8 */
+  --color-text-secondary: 148 163 184;      /* #94A3B8 — slate-400 */
+  --color-success:        34 197 94;        /* #22C55E */
+  --color-error:          248 113 113;      /* #F87171 */
+  --shadow-card: 0 1px 6px 0 rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 4px 20px 0 rgba(0, 0, 0, 0.5);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
 }
 
@@ -21,7 +50,8 @@ body {
 
 @layer components {
   .card {
-    @apply bg-white rounded-2xl border border-border shadow-card p-4;
+    @apply bg-bg rounded-2xl border border-border p-4;
+    box-shadow: var(--shadow-card);
   }
 
   .btn-primary {
