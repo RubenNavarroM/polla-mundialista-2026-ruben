@@ -248,9 +248,19 @@ export default async function PerfilPage() {
 
       {/* Lista de predicciones */}
       <div>
-        <h2 className="font-syne text-lg font-bold text-secondary mb-3">
-          Mis predicciones ({preds.length})
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-syne text-lg font-bold text-secondary">
+            Mis predicciones ({preds.length})
+          </h2>
+          {preds.length > 3 && (
+            <a
+              href="/perfil/predicciones"
+              className="text-sm text-primary hover:underline font-medium"
+            >
+              Ver todas →
+            </a>
+          )}
+        </div>
 
         {preds.length === 0 ? (
           <div className="card text-center py-10">
@@ -261,10 +271,10 @@ export default async function PerfilPage() {
           <div className="space-y-2">
             {predWithResult
               .sort((a, b) => {
-                // Primero los terminados, luego pendientes
                 const order = { exact: 0, correct: 1, wrong: 2, pending: 3 };
                 return order[a.status] - order[b.status];
               })
+              .slice(0, 3)
               .map(({ pred, match, points, status }) => {
                 const cfg = statusConfig[status];
                 return (
@@ -272,7 +282,6 @@ export default async function PerfilPage() {
                     key={pred.id}
                     className={`flex items-center gap-3 px-4 py-3 rounded-2xl border border-border ${cfg.bg}`}
                   >
-                    {/* Equipos */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate text-text-primary">
                         {match
@@ -283,16 +292,12 @@ export default async function PerfilPage() {
                         {match ? stageLabels[match.stage] ?? match.stage : ""}
                       </p>
                     </div>
-
-                    {/* Mi predicción */}
                     <div className="text-center flex-shrink-0">
                       <p className="text-xs text-text-secondary">Mi pred.</p>
                       <p className="font-mono font-bold text-sm text-text-primary">
                         {pred.home_score} – {pred.away_score}
                       </p>
                     </div>
-
-                    {/* Resultado real (si hay) */}
                     {match?.status === "finished" && (
                       <div className="text-center flex-shrink-0">
                         <p className="text-xs text-text-secondary">Real</p>
@@ -301,8 +306,6 @@ export default async function PerfilPage() {
                         </p>
                       </div>
                     )}
-
-                    {/* Status + puntos */}
                     <div className="text-right flex-shrink-0">
                       <p className={`text-xs font-semibold ${cfg.text}`}>{cfg.label}</p>
                       <p className={`font-syne font-bold text-sm ${points > 0 ? "text-success" : "text-text-secondary"}`}>
@@ -312,6 +315,14 @@ export default async function PerfilPage() {
                   </div>
                 );
               })}
+            {preds.length > 3 && (
+              <a
+                href="/perfil/predicciones"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl border border-border text-sm text-primary font-medium hover:bg-surface transition-colors"
+              >
+                Ver todas las predicciones ({preds.length})
+              </a>
+            )}
           </div>
         )}
       </div>
