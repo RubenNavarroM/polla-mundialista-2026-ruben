@@ -38,8 +38,9 @@ export function MatchCard({ match, prediction }: Props) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
-  const isLocked = match.status !== "scheduled" || prediction?.locked;
-  const isLive = match.status === "live";
+  const kickoffPassed = new Date(match.date) <= new Date();
+  const isLocked = match.status !== "scheduled" || kickoffPassed || prediction?.locked;
+  const isLive = match.status === "live" || (kickoffPassed && match.status === "scheduled");
   const isFinished = match.status === "finished";
   const { date, time } = formatDate(match.date);
 
