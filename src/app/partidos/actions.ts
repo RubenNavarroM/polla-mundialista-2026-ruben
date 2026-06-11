@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getMatch } from "@/lib/api-football";
 
 export async function savePrediction(formData: FormData) {
   const supabase = await createClient();
@@ -18,6 +19,14 @@ export async function savePrediction(formData: FormData) {
 
   if (isNaN(homeScore) || isNaN(awayScore) || homeScore < 0 || awayScore < 0) {
     return { error: "Marcador inválido" };
+  }
+
+  const match = await getMatch(matchId);
+  if (match) {
+    const kickoffPassed = new Date(match.date) <= new Date();
+    if (match.status !== "scheduled" || kickoffPassed) {
+      return { error: "Este partido ya comenzó, no puedes editar tu predicción" };
+    }
   }
 
   const { error } = await supabase
