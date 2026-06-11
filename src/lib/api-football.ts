@@ -57,7 +57,7 @@ function mapMatch(m: any): Match {
 export async function getMatches(): Promise<Match[]> {
   const res = await fetch(`${BASE_URL}/competitions/WC/matches`, {
     headers,
-    next: { revalidate: 3600 },
+    next: { revalidate: 300, tags: ["matches"] },
   });
 
   if (!res.ok) throw new Error(`football-data.org error: ${res.status}`);
