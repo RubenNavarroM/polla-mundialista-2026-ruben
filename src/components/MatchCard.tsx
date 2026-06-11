@@ -102,7 +102,7 @@ export function MatchCard({ match, prediction }: Props) {
 
         {/* Centro: resultado real si terminó/en vivo, inputs si no */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {(isLive || isFinished) ? (
+          {isFinished ? (
             <div className="flex items-center gap-1.5 bg-secondary px-4 py-2 rounded-xl">
               <span className="font-syne text-2xl font-bold text-white">
                 {match.home_score ?? 0}
@@ -146,7 +146,7 @@ export function MatchCard({ match, prediction }: Props) {
       </div>
 
       {/* Predicción del usuario si hay resultado */}
-      {(isLive || isFinished) && prediction && (
+      {isFinished && prediction && (
         <div className="mt-3 flex items-center justify-center gap-2">
           <span className="text-xs text-text-secondary">Tu predicción:</span>
           <span className="text-xs font-bold font-mono bg-surface px-2 py-0.5 rounded">
@@ -156,7 +156,7 @@ export function MatchCard({ match, prediction }: Props) {
       )}
 
       {/* Botón guardar / estado */}
-      {!isLive && !isFinished && (
+      {!isFinished && (
         <div className="mt-4 flex items-center justify-between gap-2">
           <div className="text-xs">
             {isLocked ? (
