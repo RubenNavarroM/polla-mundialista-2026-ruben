@@ -99,52 +99,29 @@ export default async function PrediccionesLocasPage() {
 
   let currentJornada: CrazyJornadaWithQuestion | null = null;
 
-  if (targetRound) {
-    // Try exact match on startDate first
-    const { data: exactMatch } = await supabase
-      .from("crazy_jornadas")
-      .select("*, crazy_questions(*)")
-      .eq("jornada_date", targetRound.startDate)
-      .maybeSingle();
+  // Find the most recent unfinished jornada (real_value not set yet).
+  // Using endDate as ceiling avoids accidentally showing a future round's jornada.
+  const endDateCutoff = targetRound?.endDate ?? today;
+  const { data: existingActive } = await supabase
+    .from("crazy_jornadas")
+    .select("*, crazy_questions(*)")
+    .lte("jornada_date", endDateCutoff)
+    .is("real_value", null)
+    .order("jornada_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    let existingRaw = exactMatch;
-
-    // Migration path: the old code created jornadas keyed to "today" instead of
-    // the round's first match date. Find any jornada that falls within this round.
-    if (!existingRaw) {
-      const { data: inRange } = await supabase
+  if (existingActive) {
+    currentJornada = existingActive as unknown as CrazyJornadaWithQuestion;
+    // Auto-set last_match_date if missing
+    if (!existingActive.last_match_date && targetRound) {
+      await supabase
         .from("crazy_jornadas")
-        .select("*, crazy_questions(*)")
-        .gte("jornada_date", targetRound.startDate)
-        .lte("jornada_date", targetRound.endDate)
-        .order("jornada_date", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      if (inRange) {
-        // Normalize: move jornada_date to actual round start so future lookups work
-        await supabase
-          .from("crazy_jornadas")
-          .update({
-            jornada_date: targetRound.startDate,
-            last_match_date: targetRound.endDate,
-          })
-          .eq("id", inRange.id);
-        existingRaw = { ...inRange, jornada_date: targetRound.startDate, last_match_date: targetRound.endDate };
-      }
+        .update({ last_match_date: targetRound.endDate })
+        .eq("id", existingActive.id);
+      currentJornada = { ...currentJornada, last_match_date: targetRound.endDate };
     }
-
-    if (existingRaw) {
-      currentJornada = existingRaw as unknown as CrazyJornadaWithQuestion;
-      // Auto-set last_match_date if still missing
-      if (!existingRaw.last_match_date) {
-        await supabase
-          .from("crazy_jornadas")
-          .update({ last_match_date: targetRound.endDate })
-          .eq("id", existingRaw.id);
-        currentJornada = { ...currentJornada, last_match_date: targetRound.endDate };
-      }
-    } else {
+  } else if (targetRound) {
       // Create new jornada
       const deadline = new Date(
         new Date(targetRound.firstMatchAt).getTime() - 30 * 60 * 1000
