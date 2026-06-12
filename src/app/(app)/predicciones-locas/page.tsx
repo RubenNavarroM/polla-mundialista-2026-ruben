@@ -99,15 +99,16 @@ export default async function PrediccionesLocasPage() {
 
   let currentJornada: CrazyJornadaWithQuestion | null = null;
 
-  // Find the most recent unfinished jornada (real_value not set yet).
-  // Using endDate as ceiling avoids accidentally showing a future round's jornada.
+  // Find the oldest unfinished jornada (real_value not set yet).
+  // ASC order ensures we always pick the original jornada (with real predictions)
+  // over any accidental duplicates created later.
   const endDateCutoff = targetRound?.endDate ?? today;
   const { data: existingActive } = await supabase
     .from("crazy_jornadas")
     .select("*, crazy_questions(*)")
     .lte("jornada_date", endDateCutoff)
     .is("real_value", null)
-    .order("jornada_date", { ascending: false })
+    .order("jornada_date", { ascending: true })
     .limit(1)
     .maybeSingle();
 
