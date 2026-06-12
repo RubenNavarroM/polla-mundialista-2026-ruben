@@ -121,6 +121,7 @@ export type Database = {
         Row: {
           id: string;
           jornada_date: string;
+          last_match_date: string | null;
           question_id: string;
           deadline: string;
           first_match_at: string;
@@ -130,6 +131,7 @@ export type Database = {
         Insert: {
           id?: string;
           jornada_date: string;
+          last_match_date?: string | null;
           question_id: string;
           deadline: string;
           first_match_at: string;
@@ -139,6 +141,7 @@ export type Database = {
         Update: {
           id?: string;
           jornada_date?: string;
+          last_match_date?: string | null;
           question_id?: string;
           deadline?: string;
           first_match_at?: string;
@@ -275,6 +278,7 @@ export interface CrazyQuestion {
 export interface CrazyJornada {
   id: string;
   jornada_date: string;
+  last_match_date: string | null;
   question_id: string;
   deadline: string;
   first_match_at: string;

@@ -26,6 +26,11 @@ function formatShortDate(dateStr: string) {
   return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 }
 
+function formatJornadaDateRange(startDate: string, endDate: string | null) {
+  if (!endDate || endDate === startDate) return formatDate(startDate);
+  return `${formatShortDate(startDate)} – ${formatShortDate(endDate)}`;
+}
+
 const STATUS_CONFIG = {
   open: { label: "Abierta", color: "text-success", bg: "bg-success/10", dot: "bg-success" },
   locked: { label: "En juego", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
@@ -60,82 +65,104 @@ export default async function PrediccionesLocasPage() {
   const matches = await getMatches();
   const today = new Date().toISOString().split("T")[0];
 
-  // Group match dates (upcoming or today)
-  const upcomingDates = Array.from(
-    new Set(
-      matches
-        .filter((m) => m.date >= today + "T00:00:00Z")
-        .map((m) => m.date.split("T")[0])
-    )
-  ).sort();
+  // Group stage matches divided into rounds of 24 (each team plays once per round)
+  const ROUND_SIZE = 24;
+  const groupStageMatches = matches
+    .filter((m) => m.stage === "group")
+    .sort((a, b) => a.date.localeCompare(b.date));
 
-  // Target date for current jornada: today if matches, else next upcoming
-  const targetDate = upcomingDates[0] ?? null;
+  const rounds: { startDate: string; endDate: string; firstMatchAt: string }[] = [];
+  for (let i = 0; i < groupStageMatches.length; i += ROUND_SIZE) {
+    const chunk = groupStageMatches.slice(i, i + ROUND_SIZE);
+    if (chunk.length > 0) {
+      rounds.push({
+        startDate: chunk[0].date.split("T")[0],
+        endDate: chunk[chunk.length - 1].date.split("T")[0],
+        firstMatchAt: chunk[0].date,
+      });
+    }
+  }
 
-  // Get or create jornada for target date
+  // Current round: first round that has started and still has unfinished matches
+  const targetRound =
+    rounds.find((r) => {
+      const hasStarted = r.startDate <= today;
+      return hasStarted && groupStageMatches
+        .filter((m) => {
+          const d = m.date.split("T")[0];
+          return d >= r.startDate && d <= r.endDate;
+        })
+        .some((m) => m.status !== "finished");
+    }) ??
+    rounds.filter((r) => r.endDate <= today).slice(-1)[0] ??
+    null;
+
   let currentJornada: CrazyJornadaWithQuestion | null = null;
 
-  if (targetDate) {
-    const firstMatchOfDate = matches
-      .filter((m) => m.date.startsWith(targetDate))
-      .sort((a, b) => a.date.localeCompare(b.date))[0];
+  if (targetRound) {
+    const { data: existing } = await supabase
+      .from("crazy_jornadas")
+      .select("*, crazy_questions(*)")
+      .eq("jornada_date", targetRound.startDate)
+      .maybeSingle();
 
-    if (firstMatchOfDate) {
-      // Try to get existing first
-      const { data: existing } = await supabase
-        .from("crazy_jornadas")
-        .select("*, crazy_questions(*)")
-        .eq("jornada_date", targetDate)
-        .maybeSingle();
-
-      if (existing) {
-        currentJornada = existing as unknown as CrazyJornadaWithQuestion;
-      } else {
-        // Create new jornada
-        const firstMatchAt = firstMatchOfDate.date;
-        const deadline = new Date(new Date(firstMatchAt).getTime() - 30 * 60 * 1000).toISOString();
-
-        const { data: usedJornadas } = await supabase
+    if (existing) {
+      currentJornada = existing as unknown as CrazyJornadaWithQuestion;
+      // Auto-set last_match_date if missing (migration catch-up)
+      if (!existing.last_match_date) {
+        await supabase
           .from("crazy_jornadas")
-          .select("question_id");
-        const usedIds = new Set((usedJornadas ?? []).map((j: { question_id: string }) => j.question_id));
+          .update({ last_match_date: targetRound.endDate })
+          .eq("id", existing.id);
+        currentJornada = { ...currentJornada, last_match_date: targetRound.endDate };
+      }
+    } else {
+      // Create new jornada
+      const deadline = new Date(
+        new Date(targetRound.firstMatchAt).getTime() - 30 * 60 * 1000
+      ).toISOString();
 
-        const { data: allQuestions } = await supabase
-          .from("crazy_questions")
-          .select("*");
+      const { data: usedJornadas } = await supabase
+        .from("crazy_jornadas")
+        .select("question_id");
+      const usedIds = new Set((usedJornadas ?? []).map((j: { question_id: string }) => j.question_id));
 
-        let available = (allQuestions ?? []).filter((q: { id: string }) => !usedIds.has(q.id));
-        if (available.length === 0) available = allQuestions ?? [];
+      const { data: allQuestions } = await supabase
+        .from("crazy_questions")
+        .select("*");
 
-        if (available.length > 0) {
-          const question = available[Math.floor(Math.random() * available.length)];
-          const { data: newJ } = await supabase
-            .from("crazy_jornadas")
-            .insert({
-              jornada_date: targetDate,
-              question_id: question.id,
-              deadline,
-              first_match_at: firstMatchAt,
-            })
-            .select("*, crazy_questions(*)")
-            .single();
-          if (newJ) currentJornada = newJ as unknown as CrazyJornadaWithQuestion;
-        }
+      let available = (allQuestions ?? []).filter((q: { id: string }) => !usedIds.has(q.id));
+      if (available.length === 0) available = allQuestions ?? [];
 
-        // Fallback: race condition — try to read again
-        if (!currentJornada) {
-          const { data: raceRead } = await supabase
-            .from("crazy_jornadas")
-            .select("*, crazy_questions(*)")
-            .eq("jornada_date", targetDate)
-            .maybeSingle();
-          if (raceRead) currentJornada = raceRead as unknown as CrazyJornadaWithQuestion;
-        }
+      if (available.length > 0) {
+        const question = available[Math.floor(Math.random() * available.length)];
+        const { data: newJ } = await supabase
+          .from("crazy_jornadas")
+          .insert({
+            jornada_date: targetRound.startDate,
+            last_match_date: targetRound.endDate,
+            question_id: question.id,
+            deadline,
+            first_match_at: targetRound.firstMatchAt,
+          })
+          .select("*, crazy_questions(*)")
+          .single();
+        if (newJ) currentJornada = newJ as unknown as CrazyJornadaWithQuestion;
+      }
+
+      // Race condition fallback
+      if (!currentJornada) {
+        const { data: raceRead } = await supabase
+          .from("crazy_jornadas")
+          .select("*, crazy_questions(*)")
+          .eq("jornada_date", targetRound.startDate)
+          .maybeSingle();
+        if (raceRead) currentJornada = raceRead as unknown as CrazyJornadaWithQuestion;
       }
     }
   }
 
-  // If no upcoming jornada, fall back to most recent past one
+  // Fall back to most recent past jornada if no active round found
   if (!currentJornada) {
     const { data: latest } = await supabase
       .from("crazy_jornadas")
@@ -162,9 +189,11 @@ export default async function PrediccionesLocasPage() {
   let jornadaStatus: ReturnType<typeof getJornadaStatus> = "open";
 
   if (currentJornada) {
-    const jornadaMatches = matches.filter(
-      (m) => m.date.startsWith(currentJornada!.jornada_date)
-    );
+    const jornadaEndDate = currentJornada.last_match_date ?? currentJornada.jornada_date;
+    const jornadaMatches = matches.filter((m) => {
+      const d = m.date.split("T")[0];
+      return d >= currentJornada!.jornada_date && d <= jornadaEndDate;
+    });
     jornadaStatus = getJornadaStatus(currentJornada, jornadaMatches);
 
     const [{ data: answers }, { data: myAns }] = await Promise.all([
@@ -243,7 +272,7 @@ export default async function PrediccionesLocasPage() {
                 {currentJornada.crazy_questions.question}
               </h2>
               <p className="text-xs text-text-secondary mt-1.5">
-                📅 {formatDate(currentJornada.jornada_date)}
+                📅 {formatJornadaDateRange(currentJornada.jornada_date, currentJornada.last_match_date)}
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -517,7 +546,11 @@ export default async function PrediccionesLocasPage() {
             {jornadas
               .filter((j) => j.id !== currentJornada?.id)
               .map(async (jornada) => {
-                const jMatches = matches.filter((m) => m.date.startsWith(jornada.jornada_date));
+                const jEnd = jornada.last_match_date ?? jornada.jornada_date;
+                const jMatches = matches.filter((m) => {
+                  const d = m.date.split("T")[0];
+                  return d >= jornada.jornada_date && d <= jEnd;
+                });
                 const status = getJornadaStatus(jornada, jMatches);
 
                 const { data: userAns } = await supabase
@@ -541,7 +574,7 @@ export default async function PrediccionesLocasPage() {
                           {jornada.crazy_questions.question}
                         </p>
                         <p className="text-xs text-text-secondary">
-                          {formatShortDate(jornada.jornada_date)} · {count ?? 0} participantes
+                          {formatJornadaDateRange(jornada.jornada_date, jornada.last_match_date)} · {count ?? 0} participantes
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
