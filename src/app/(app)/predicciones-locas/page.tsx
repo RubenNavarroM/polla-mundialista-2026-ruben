@@ -165,7 +165,6 @@ export default async function PrediccionesLocasPage() {
           .maybeSingle();
         if (raceRead) currentJornada = raceRead as unknown as CrazyJornadaWithQuestion;
       }
-    }
   }
 
   // Fall back to most recent past jornada if no active round found
