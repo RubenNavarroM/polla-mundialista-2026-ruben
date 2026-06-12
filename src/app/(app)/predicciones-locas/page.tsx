@@ -100,20 +100,48 @@ export default async function PrediccionesLocasPage() {
   let currentJornada: CrazyJornadaWithQuestion | null = null;
 
   if (targetRound) {
-    const { data: existing } = await supabase
+    // Try exact match on startDate first
+    const { data: exactMatch } = await supabase
       .from("crazy_jornadas")
       .select("*, crazy_questions(*)")
       .eq("jornada_date", targetRound.startDate)
       .maybeSingle();
 
-    if (existing) {
-      currentJornada = existing as unknown as CrazyJornadaWithQuestion;
-      // Auto-set last_match_date if missing (migration catch-up)
-      if (!existing.last_match_date) {
+    let existingRaw = exactMatch;
+
+    // Migration path: the old code created jornadas keyed to "today" instead of
+    // the round's first match date. Find any jornada that falls within this round.
+    if (!existingRaw) {
+      const { data: inRange } = await supabase
+        .from("crazy_jornadas")
+        .select("*, crazy_questions(*)")
+        .gte("jornada_date", targetRound.startDate)
+        .lte("jornada_date", targetRound.endDate)
+        .order("jornada_date", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (inRange) {
+        // Normalize: move jornada_date to actual round start so future lookups work
+        await supabase
+          .from("crazy_jornadas")
+          .update({
+            jornada_date: targetRound.startDate,
+            last_match_date: targetRound.endDate,
+          })
+          .eq("id", inRange.id);
+        existingRaw = { ...inRange, jornada_date: targetRound.startDate, last_match_date: targetRound.endDate };
+      }
+    }
+
+    if (existingRaw) {
+      currentJornada = existingRaw as unknown as CrazyJornadaWithQuestion;
+      // Auto-set last_match_date if still missing
+      if (!existingRaw.last_match_date) {
         await supabase
           .from("crazy_jornadas")
           .update({ last_match_date: targetRound.endDate })
-          .eq("id", existing.id);
+          .eq("id", existingRaw.id);
         currentJornada = { ...currentJornada, last_match_date: targetRound.endDate };
       }
     } else {
