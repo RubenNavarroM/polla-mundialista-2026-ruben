@@ -24,22 +24,6 @@ function parseStatus(status: string): MatchStatus {
   return "scheduled"; // TIMED, SCHEDULED, etc.
 }
 
-// Manual score correction: Spain vs Saudi Arabia ended 5-0 but API returned 4-0
-function applyScoreOverrides(match: Match): Match {
-  const spainIsHome =
-    match.home_team.name === "Spain" && match.away_team.name === "Saudi Arabia";
-  const spainIsAway =
-    match.home_team.name === "Saudi Arabia" && match.away_team.name === "Spain";
-
-  if (spainIsHome) {
-    return { ...match, home_score: 5, away_score: 0 };
-  }
-  if (spainIsAway) {
-    return { ...match, home_score: 0, away_score: 5 };
-  }
-  return match;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapMatch(m: any): Match {
   const home: Team = {
@@ -80,7 +64,7 @@ export async function getMatches(): Promise<Match[]> {
 
   const data = await res.json();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data.matches ?? []).map((m: any) => applyScoreOverrides(mapMatch(m)));
+  return (data.matches ?? []).map((m: any) => mapMatch(m));
 }
 
 export async function getLiveMatches(): Promise<Match[]> {
@@ -92,7 +76,7 @@ export async function getLiveMatches(): Promise<Match[]> {
   if (!res.ok) return [];
   const data = await res.json();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data.matches ?? []).map((m: any) => applyScoreOverrides(mapMatch(m)));
+  return (data.matches ?? []).map((m: any) => mapMatch(m));
 }
 
 export interface GroupStanding {
@@ -153,7 +137,7 @@ export async function getMatch(id: string): Promise<Match | null> {
 
   if (!res.ok) return null;
   const data = await res.json();
-  return applyScoreOverrides(mapMatch(data));
+  return mapMatch(data);
 }
 
 export interface MatchGoal {
@@ -215,7 +199,7 @@ export async function getMatchFullDetail(id: string): Promise<MatchFullDetail | 
   const data = await res.json();
 
   return {
-    ...applyScoreOverrides(mapMatch(data)),
+    ...mapMatch(data),
     goals: (data.goals ?? []).map(mapGoal),
     bookings: (data.bookings ?? []).map(mapBooking),
     substitutions: (data.substitutions ?? []).map(mapSubstitution),
