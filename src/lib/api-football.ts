@@ -10,6 +10,7 @@ function parseStage(stage: string, group: string | null): MatchStage {
   if (group) return "group";
   const s = stage.toUpperCase();
   if (s.includes("GROUP")) return "group";
+  if (s.includes("LAST_32") || s.includes("ROUND_OF_32")) return "round_of_32";
   if (s.includes("LAST_16") || s.includes("ROUND_OF_16")) return "round_of_16";
   if (s.includes("QUARTER")) return "quarter_final";
   if (s.includes("SEMI")) return "semi_final";
@@ -22,6 +23,22 @@ function parseStatus(status: string): MatchStatus {
   if (["IN_PLAY", "PAUSED", "HALFTIME"].includes(status)) return "live";
   if (["FINISHED", "AWARDED"].includes(status)) return "finished";
   return "scheduled"; // TIMED, SCHEDULED, etc.
+}
+
+// Score correction: API returns 5-0 for Spain vs Saudi Arabia but real result was 4-0
+function applyScoreOverrides(match: Match): Match {
+  const spainIsHome =
+    match.home_team.name === "Spain" && match.away_team.name === "Saudi Arabia";
+  const spainIsAway =
+    match.home_team.name === "Saudi Arabia" && match.away_team.name === "Spain";
+
+  if (spainIsHome) {
+    return { ...match, home_score: 4, away_score: 0 };
+  }
+  if (spainIsAway) {
+    return { ...match, home_score: 0, away_score: 4 };
+  }
+  return match;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,7 +81,7 @@ export async function getMatches(): Promise<Match[]> {
 
   const data = await res.json();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data.matches ?? []).map((m: any) => mapMatch(m));
+  return (data.matches ?? []).map((m: any) => applyScoreOverrides(mapMatch(m)));
 }
 
 export async function getLiveMatches(): Promise<Match[]> {
@@ -76,7 +93,7 @@ export async function getLiveMatches(): Promise<Match[]> {
   if (!res.ok) return [];
   const data = await res.json();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data.matches ?? []).map((m: any) => mapMatch(m));
+  return (data.matches ?? []).map((m: any) => applyScoreOverrides(mapMatch(m)));
 }
 
 export interface GroupStanding {
@@ -137,7 +154,7 @@ export async function getMatch(id: string): Promise<Match | null> {
 
   if (!res.ok) return null;
   const data = await res.json();
-  return mapMatch(data);
+  return applyScoreOverrides(mapMatch(data));
 }
 
 export interface MatchGoal {
@@ -199,7 +216,7 @@ export async function getMatchFullDetail(id: string): Promise<MatchFullDetail | 
   const data = await res.json();
 
   return {
-    ...mapMatch(data),
+    ...applyScoreOverrides(mapMatch(data)),
     goals: (data.goals ?? []).map(mapGoal),
     bookings: (data.bookings ?? []).map(mapBooking),
     substitutions: (data.substitutions ?? []).map(mapSubstitution),

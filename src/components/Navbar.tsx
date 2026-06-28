@@ -6,11 +6,10 @@ import { signOut } from "@/app/auth/actions";
 import { ThemeToggle } from "./ThemeToggle";
 
 const mobileLinks = [
-  { href: "/partidos",           label: "Partidos", icon: "⚽" },
-  { href: "/leaderboard",        label: "Ranking",  icon: "🏆" },
-  { href: "/predicciones-locas", label: "Locas",    icon: "🎲" },
-  { href: "/grupos",             label: "Grupos",   icon: "📊" },
-  { href: "/perfil",             label: "Perfil",   icon: "👤" },
+  { href: "/partidos",    label: "Partidos",      icon: "⚽" },
+  { href: "/leaderboard", label: "Ranking",       icon: "🏆" },
+  { href: "/grupos",      label: "Eliminatorias", icon: "🗂️" },
+  { href: "/perfil",      label: "Perfil",        icon: "👤" },
 ];
 
 const desktopLinks = [
