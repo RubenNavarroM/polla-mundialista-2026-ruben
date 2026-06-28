@@ -10,6 +10,7 @@ function parseStage(stage: string, group: string | null): MatchStage {
   if (group) return "group";
   const s = stage.toUpperCase();
   if (s.includes("GROUP")) return "group";
+  if (s.includes("LAST_32") || s.includes("ROUND_OF_32")) return "round_of_32";
   if (s.includes("LAST_16") || s.includes("ROUND_OF_16")) return "round_of_16";
   if (s.includes("QUARTER")) return "quarter_final";
   if (s.includes("SEMI")) return "semi_final";

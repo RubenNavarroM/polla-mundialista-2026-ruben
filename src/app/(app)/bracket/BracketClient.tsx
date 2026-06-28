@@ -14,6 +14,7 @@ interface Props {
 }
 
 const stageLabels: Record<string, string> = {
+  round_of_32: "16avos de Final",
   round_of_16: "Octavos de Final",
   quarter_final: "Cuartos de Final",
   semi_final: "Semifinales",
@@ -21,7 +22,7 @@ const stageLabels: Record<string, string> = {
   final: "Gran Final",
 };
 
-const stageOrder = ["round_of_16", "quarter_final", "semi_final", "third_place", "final"];
+const stageOrder = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "third_place", "final"];
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("es-CO", {
@@ -70,8 +71,8 @@ export function BracketClient({ teams, existing, knockoutMatches, isLocked }: Pr
         </h2>
         <p className="text-text-secondary text-sm mb-4">
           {isLocked
-            ? "🔒 El bracket está bloqueado — ya iniciaron los octavos"
-            : "Elige tus tres finalistas antes de que empiecen los octavos"}
+            ? "🔒 El bracket está bloqueado — ya iniciaron las eliminatorias"
+            : "Elige tus tres finalistas antes de que empiecen las eliminatorias"}
         </p>
 
         {error && (
@@ -196,7 +197,7 @@ export function BracketClient({ teams, existing, knockoutMatches, isLocked }: Pr
       ) : (
         <div className="card text-center py-10">
           <p className="text-3xl mb-3">⏳</p>
-          <p className="font-semibold text-text-primary">Los octavos se definen después de la fase de grupos</p>
+          <p className="font-semibold text-text-primary">Las eliminatorias se definen después de la fase de grupos</p>
           <p className="text-text-secondary text-sm mt-1">¡Guarda tu predicción de podio ahora!</p>
         </div>
       )}

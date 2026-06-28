@@ -24,7 +24,7 @@ export default async function BracketPage() {
   }
   const teams = Array.from(teamMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 
-  const knockoutStages = ["round_of_16", "quarter_final", "semi_final", "third_place", "final"];
+  const knockoutStages = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "third_place", "final"];
   const knockoutMatches = matches.filter((m) => knockoutStages.includes(m.stage));
 
   // ¿Ya empezaron los octavos?
