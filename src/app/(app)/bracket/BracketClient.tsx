@@ -55,9 +55,11 @@ export function BracketClient({ teams, existing, knockoutMatches, isLocked }: Pr
     });
   }
 
-  // Agrupa partidos de eliminatorias por fase
+  // Agrupa partidos de eliminatorias por fase, ordenados por ID para respetar el bracket
   const grouped = stageOrder.reduce((acc, stage) => {
-    const matches = knockoutMatches.filter((m) => m.stage === stage);
+    const matches = knockoutMatches
+      .filter((m) => m.stage === stage)
+      .sort((a, b) => Number(a.id) - Number(b.id));
     if (matches.length > 0) acc.push({ stage, matches });
     return acc;
   }, [] as { stage: string; matches: Match[] }[]);

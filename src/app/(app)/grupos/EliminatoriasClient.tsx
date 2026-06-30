@@ -169,15 +169,16 @@ export function EliminatoriasClient({ matchesByStage }: { matchesByStage: Matche
   const activeTab = TABS.find((t) => t.key === activeKey)!;
 
   // For the final tab, also include third_place matches
-  const currentMatches =
+  const currentMatches = (
     activeKey === "final"
       ? [...(matchesByStage.final ?? [])]
-      : (matchesByStage[activeKey as keyof MatchesByStage] ?? []);
+      : [...(matchesByStage[activeKey as keyof MatchesByStage] ?? [])]
+  ).sort((a, b) => Number(a.id) - Number(b.id));
 
   const thirdPlaceMatches =
     activeKey === "final" ? (matchesByStage.third_place ?? []) : [];
 
-  // Group current matches in pairs for bracket visual
+  // Group in pairs: each pair's winners face each other in the next round
   const pairs: Match[][] = [];
   for (let i = 0; i < currentMatches.length; i += 2) {
     pairs.push(currentMatches.slice(i, i + 2));
