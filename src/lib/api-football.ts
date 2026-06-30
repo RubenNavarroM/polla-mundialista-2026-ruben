@@ -25,6 +25,40 @@ function parseStatus(status: string): MatchStatus {
   return "scheduled"; // TIMED, SCHEDULED, etc.
 }
 
+// Returns the goal score excluding penalty shootout goals.
+// football-data.org v4 can include penalty goals in score.fullTime for
+// PENALTY_SHOOTOUT matches. We always want the score at the end of
+// regular time or extra time — never the penalty tally.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractGoalScore(score: any): { home: number | null; away: number | null } {
+  const duration = (score?.duration ?? "REGULAR").toUpperCase();
+
+  if (duration === "PENALTY_SHOOTOUT") {
+    // Preferred: explicit regularTime + extraTime fields (v4 when available)
+    if (score?.regularTime?.home != null) {
+      return {
+        home: (score.regularTime.home ?? 0) + (score.extraTime?.home ?? 0),
+        away: (score.regularTime.away ?? 0) + (score.extraTime?.away ?? 0),
+      };
+    }
+    // Fallback: subtract penalty goals from fullTime if the API bundled them in
+    if (score?.penalties?.home != null) {
+      const adjHome = (score.fullTime?.home ?? 0) - (score.penalties.home ?? 0);
+      const adjAway = (score.fullTime?.away ?? 0) - (score.penalties.away ?? 0);
+      // Safety: only use if result is non-negative (i.e. penaltis were actually bundled in)
+      if (adjHome >= 0 && adjAway >= 0) {
+        return { home: adjHome, away: adjAway };
+      }
+    }
+  }
+
+  // REGULAR or EXTRA_TIME: fullTime already holds the correct goal count
+  return {
+    home: score?.fullTime?.home ?? null,
+    away: score?.fullTime?.away ?? null,
+  };
+}
+
 // Score correction: API returns 5-0 for Spain vs Saudi Arabia but real result was 4-0
 function applyScoreOverrides(match: Match): Match {
   const spainIsHome =
@@ -56,12 +90,14 @@ function mapMatch(m: any): Match {
     flag: m.awayTeam.crest ?? "",
   };
 
+  const { home: homeScore, away: awayScore } = extractGoalScore(m.score);
+
   return {
     id: String(m.id),
     home_team: home,
     away_team: away,
-    home_score: m.score?.fullTime?.home ?? null,
-    away_score: m.score?.fullTime?.away ?? null,
+    home_score: homeScore,
+    away_score: awayScore,
     date: m.utcDate,
     venue: m.venue ?? "",
     city: "",
