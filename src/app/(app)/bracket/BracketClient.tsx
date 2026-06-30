@@ -5,6 +5,7 @@ import { TeamSelector } from "@/components/TeamSelector";
 import { saveBracketPrediction } from "./actions";
 import type { Team, Match } from "@/types/api";
 import type { BracketPrediction } from "@/types/database";
+import { orderR32ByBracket } from "@/lib/bracket";
 
 interface Props {
   teams: Team[];
@@ -55,11 +56,13 @@ export function BracketClient({ teams, existing, knockoutMatches, isLocked }: Pr
     });
   }
 
-  // Agrupa partidos de eliminatorias por fase, ordenados por ID para respetar el bracket
+  // Agrupa partidos de eliminatorias por fase en orden de bracket
   const grouped = stageOrder.reduce((acc, stage) => {
-    const matches = knockoutMatches
-      .filter((m) => m.stage === stage)
-      .sort((a, b) => Number(a.id) - Number(b.id));
+    const stageMatches = knockoutMatches.filter((m) => m.stage === stage);
+    const matches =
+      stage === "round_of_32"
+        ? orderR32ByBracket(stageMatches)
+        : stageMatches.sort((a, b) => Number(a.id) - Number(b.id));
     if (matches.length > 0) acc.push({ stage, matches });
     return acc;
   }, [] as { stage: string; matches: Match[] }[]);

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Match } from "@/types/api";
+import { orderR32ByBracket } from "@/lib/bracket";
 
 const TABS = [
   { key: "round_of_32",   label: "1/16",        title: "16avos de Final"  },
@@ -169,11 +170,14 @@ export function EliminatoriasClient({ matchesByStage }: { matchesByStage: Matche
   const activeTab = TABS.find((t) => t.key === activeKey)!;
 
   // For the final tab, also include third_place matches
-  const currentMatches = (
-    activeKey === "final"
-      ? [...(matchesByStage.final ?? [])]
-      : [...(matchesByStage[activeKey as keyof MatchesByStage] ?? [])]
-  ).sort((a, b) => Number(a.id) - Number(b.id));
+  const currentMatches =
+    activeKey === "round_of_32"
+      ? orderR32ByBracket(matchesByStage.round_of_32 ?? [])
+      : activeKey === "final"
+      ? [...(matchesByStage.final ?? [])].sort((a, b) => Number(a.id) - Number(b.id))
+      : [...(matchesByStage[activeKey as keyof MatchesByStage] ?? [])].sort(
+          (a, b) => Number(a.id) - Number(b.id)
+        );
 
   const thirdPlaceMatches =
     activeKey === "final" ? (matchesByStage.third_place ?? []) : [];
