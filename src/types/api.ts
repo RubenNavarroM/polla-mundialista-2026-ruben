@@ -12,6 +12,8 @@ export interface Match {
   away_team: Team;
   home_score: number | null;
   away_score: number | null;
+  penalties_home: number | null;
+  penalties_away: number | null;
   date: string;
   venue: string;
   city: string;

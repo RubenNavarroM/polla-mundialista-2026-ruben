@@ -23,6 +23,7 @@ function formatDate(dateStr: string) {
 
 const stageLabels: Record<string, string> = {
   group: "Fase de Grupos",
+  round_of_32: "16avos de Final",
   round_of_16: "Octavos de Final",
   quarter_final: "Cuartos de Final",
   semi_final: "Semifinal",

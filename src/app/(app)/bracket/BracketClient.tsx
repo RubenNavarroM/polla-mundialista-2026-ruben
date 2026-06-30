@@ -156,40 +156,82 @@ export function BracketClient({ teams, existing, knockoutMatches, isLocked }: Pr
                 {stageLabels[stage] ?? stage}
               </h3>
               <div className="space-y-2">
-                {matches.map((m) => (
-                  <div key={m.id} className="card py-3 flex items-center gap-3">
-                    <div className="flex-1 flex items-center gap-2 min-w-0">
-                      {m.home_team.flag ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={m.home_team.flag} alt={m.home_team.name} className="w-6 h-4 rounded object-cover flex-shrink-0" />
-                      ) : null}
-                      <span className="text-sm font-semibold truncate">{m.home_team.name}</span>
-                    </div>
+                {matches.map((m) => {
+                  const finished = m.status === "finished";
+                  const hasPenalties = m.penalties_home !== null && m.penalties_away !== null;
+                  const homeWins = finished && (
+                    hasPenalties
+                      ? (m.penalties_home! > m.penalties_away!)
+                      : (m.home_score! > m.away_score!)
+                  );
+                  const awayWins = finished && (
+                    hasPenalties
+                      ? (m.penalties_away! > m.penalties_home!)
+                      : (m.away_score! > m.home_score!)
+                  );
 
-                    <div className="flex-shrink-0 text-center">
-                      {m.status === "finished" ? (
-                        <span className="font-syne font-bold text-secondary">
-                          {m.home_score} – {m.away_score}
+                  return (
+                    <div key={m.id} className="card py-3 px-4 space-y-1">
+                      {/* Equipo local */}
+                      <div className={`flex items-center gap-2 ${finished && !homeWins ? "opacity-40" : ""}`}>
+                        {m.home_team.flag ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={m.home_team.flag} alt={m.home_team.name} className="w-6 h-4 rounded object-cover flex-shrink-0" />
+                        ) : null}
+                        <span className={`text-sm flex-1 truncate ${homeWins ? "font-bold text-text-primary" : "font-medium text-text-primary"}`}>
+                          {m.home_team.name}
                         </span>
-                      ) : m.status === "live" ? (
-                        <span className="text-xs font-bold text-error flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 bg-error rounded-full animate-pulse" />
-                          VIVO
-                        </span>
-                      ) : (
-                        <span className="text-xs text-text-secondary">{formatDate(m.date)}</span>
-                      )}
-                    </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {finished ? (
+                            <span className={`font-syne font-bold text-base w-5 text-center ${homeWins ? "text-secondary" : "text-text-secondary"}`}>
+                              {m.home_score}
+                            </span>
+                          ) : null}
+                          {homeWins && <span className="text-success text-xs font-bold">✓</span>}
+                        </div>
+                      </div>
 
-                    <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
-                      <span className="text-sm font-semibold truncate text-right">{m.away_team.name}</span>
-                      {m.away_team.flag ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={m.away_team.flag} alt={m.away_team.name} className="w-6 h-4 rounded object-cover flex-shrink-0" />
-                      ) : null}
+                      {/* Separador con estado */}
+                      <div className="flex items-center gap-2 py-0.5">
+                        <div className="flex-1 h-px bg-border" />
+                        {m.status === "live" ? (
+                          <span className="text-xs font-bold text-error flex items-center gap-1 flex-shrink-0">
+                            <span className="w-1.5 h-1.5 bg-error rounded-full animate-pulse" />
+                            VIVO
+                          </span>
+                        ) : m.status === "scheduled" ? (
+                          <span className="text-xs text-text-secondary flex-shrink-0">{formatDate(m.date)}</span>
+                        ) : hasPenalties ? (
+                          <span className="text-xs text-text-secondary flex-shrink-0 font-medium">
+                            Pen {m.penalties_home} – {m.penalties_away}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-text-secondary flex-shrink-0">FT</span>
+                        )}
+                        <div className="flex-1 h-px bg-border" />
+                      </div>
+
+                      {/* Equipo visitante */}
+                      <div className={`flex items-center gap-2 ${finished && !awayWins ? "opacity-40" : ""}`}>
+                        {m.away_team.flag ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={m.away_team.flag} alt={m.away_team.name} className="w-6 h-4 rounded object-cover flex-shrink-0" />
+                        ) : null}
+                        <span className={`text-sm flex-1 truncate ${awayWins ? "font-bold text-text-primary" : "font-medium text-text-primary"}`}>
+                          {m.away_team.name}
+                        </span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {finished ? (
+                            <span className={`font-syne font-bold text-base w-5 text-center ${awayWins ? "text-secondary" : "text-text-secondary"}`}>
+                              {m.away_score}
+                            </span>
+                          ) : null}
+                          {awayWins && <span className="text-success text-xs font-bold">✓</span>}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

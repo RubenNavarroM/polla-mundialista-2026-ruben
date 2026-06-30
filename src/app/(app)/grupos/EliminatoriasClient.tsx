@@ -68,8 +68,18 @@ function MatchCard({ match }: { match: Match }) {
   const live = match.status === "live";
   const hs = match.home_score;
   const as_ = match.away_score;
-  const homeWon: boolean | null = done && hs !== null && as_ !== null ? hs > as_ : null;
-  const awayWon: boolean | null = done && hs !== null && as_ !== null ? as_ > hs : null;
+  const ph = match.penalties_home;
+  const pa = match.penalties_away;
+  const hasPenalties = ph !== null && pa !== null;
+
+  const homeWon: boolean | null =
+    done && hs !== null && as_ !== null
+      ? hasPenalties ? ph! > pa! : hs > as_
+      : null;
+  const awayWon: boolean | null =
+    done && hs !== null && as_ !== null
+      ? hasPenalties ? pa! > ph! : as_ > hs
+      : null;
 
   return (
     <div
@@ -108,6 +118,11 @@ function MatchCard({ match }: { match: Match }) {
           score={done || live ? as_ : null}
           winner={awayWon}
         />
+        {done && hasPenalties && (
+          <div className="text-center text-[11px] text-text-secondary font-medium pt-0.5">
+            Penales: {ph} – {pa}
+          </div>
+        )}
       </div>
     </div>
   );

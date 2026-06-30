@@ -91,6 +91,7 @@ function mapMatch(m: any): Match {
   };
 
   const { home: homeScore, away: awayScore } = extractGoalScore(m.score);
+  const isPenalty = (m.score?.duration ?? "REGULAR").toUpperCase() === "PENALTY_SHOOTOUT";
 
   return {
     id: String(m.id),
@@ -98,6 +99,8 @@ function mapMatch(m: any): Match {
     away_team: away,
     home_score: homeScore,
     away_score: awayScore,
+    penalties_home: isPenalty ? (m.score?.penalties?.home ?? null) : null,
+    penalties_away: isPenalty ? (m.score?.penalties?.away ?? null) : null,
     date: m.utcDate,
     venue: m.venue ?? "",
     city: "",
