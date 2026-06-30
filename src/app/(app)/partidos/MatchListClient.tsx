@@ -5,12 +5,11 @@ import { MatchCard } from "@/components/MatchCard";
 import type { Match, MatchStage } from "@/types/api";
 import type { Prediction } from "@/types/database";
 
-type Filter = "todos" | "hoy" | "grupo" | "eliminatorias";
+type Filter = "todos" | "hoy" | "eliminatorias";
 
 const filterLabels: { key: Filter; label: string }[] = [
   { key: "todos", label: "Todos" },
   { key: "hoy", label: "Hoy 🔴" },
-  { key: "grupo", label: "Grupos" },
   { key: "eliminatorias", label: "Eliminatorias" },
 ];
 
@@ -31,7 +30,6 @@ export function MatchListClient({ matches, predMap }: Props) {
   const filtered = useMemo(() => {
     return matches.filter((m) => {
       if (filter === "hoy") return new Date(m.date).toDateString() === today;
-      if (filter === "grupo") return m.stage === "group";
       if (filter === "eliminatorias") return knockoutStages.includes(m.stage);
       return true;
     });
