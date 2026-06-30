@@ -13,7 +13,7 @@ const filterLabels: { key: Filter; label: string }[] = [
   { key: "eliminatorias", label: "Eliminatorias" },
 ];
 
-const knockoutStages: MatchStage[] = ["round_of_16", "quarter_final", "semi_final", "third_place", "final"];
+const knockoutStages: MatchStage[] = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "third_place", "final"];
 
 interface Props {
   matches: Match[];
