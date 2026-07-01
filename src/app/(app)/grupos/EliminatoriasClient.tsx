@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Match } from "@/types/api";
-import { orderR32ByBracket } from "@/lib/bracket";
+import { orderR32ByBracket, buildR16Slots, getMatchWinner, type R16Slot } from "@/lib/bracket";
 
 const TABS = [
   { key: "round_of_32",   label: "1/16",        title: "16avos de Final"  },
@@ -98,7 +98,7 @@ function MatchCard({ match }: { match: Match }) {
       )}
 
       {/* Date row (upcoming only) */}
-      {!done && !live && (
+      {!done && !live && match.date && (
         <div className="flex justify-between items-center px-3 pt-2.5 pb-0.5">
           <span className="text-[11px] font-medium text-text-secondary">{fmtDate(match.date)}</span>
           <span className="text-[11px] font-semibold text-text-secondary">{fmtTime(match.date)}</span>
@@ -160,10 +160,57 @@ export interface MatchesByStage {
   final?: Match[];
 }
 
+// Derives a team label from the feeder R32 match when R16 shows "Por definir"
+function r16Label(r32Match: Match | null, currentName: string): { name: string; flag: string } {
+  if (currentName !== "Por definir") return { name: currentName, flag: "" };
+  if (!r32Match) return { name: "Por definir", flag: "" };
+  const winner = getMatchWinner(r32Match);
+  if (winner) return { name: winner.name, flag: winner.flag };
+  return {
+    name: `Gan. ${r32Match.home_team.code}/${r32Match.away_team.code}`,
+    flag: "",
+  };
+}
+
+// Builds a displayable Match for an R16 slot, filling in TBD teams from R32 results
+function enrichedR16Match(slot: R16Slot): Match {
+  if (slot.r16Match) {
+    const m = slot.r16Match;
+    const { name: homeName, flag: homeFlag } = r16Label(slot.r32Home, m.home_team.name);
+    const { name: awayName, flag: awayFlag } = r16Label(slot.r32Away, m.away_team.name);
+    return {
+      ...m,
+      home_team: { ...m.home_team, name: homeName, flag: homeFlag || m.home_team.flag },
+      away_team: { ...m.away_team, name: awayName, flag: awayFlag || m.away_team.flag },
+    };
+  }
+  // API hasn't created this R16 match yet — build a virtual placeholder
+  const { name: homeName, flag: homeFlag } = r16Label(slot.r32Home, "Por definir");
+  const { name: awayName, flag: awayFlag } = r16Label(slot.r32Away, "Por definir");
+  return {
+    id: `virtual-r16-${slot.r32Home?.id ?? "?"}-${slot.r32Away?.id ?? "?"}`,
+    home_team: { id: "0", name: homeName, code: "TBD", flag: homeFlag },
+    away_team: { id: "0", name: awayName, code: "TBD", flag: awayFlag },
+    home_score: null,
+    away_score: null,
+    penalties_home: null,
+    penalties_away: null,
+    date: "",
+    venue: "",
+    city: "",
+    stage: "round_of_16",
+    status: "scheduled",
+  };
+}
+
 export function EliminatoriasClient({ matchesByStage }: { matchesByStage: MatchesByStage }) {
-  const available = TABS.filter(
-    (t) => (matchesByStage[t.key as keyof MatchesByStage]?.length ?? 0) > 0
-  );
+  const available = TABS.filter((t) => {
+    if (t.key === "round_of_16") {
+      // Always show R16 tab if R32 has started
+      return (matchesByStage.round_of_32?.length ?? 0) > 0;
+    }
+    return (matchesByStage[t.key as keyof MatchesByStage]?.length ?? 0) > 0;
+  });
 
   const [activeKey, setActiveKey] = useState<TabKey>(available[0]?.key ?? "final");
 
@@ -173,6 +220,11 @@ export function EliminatoriasClient({ matchesByStage }: { matchesByStage: Matche
   const currentMatches =
     activeKey === "round_of_32"
       ? orderR32ByBracket(matchesByStage.round_of_32 ?? [])
+      : activeKey === "round_of_16"
+      ? buildR16Slots(
+          matchesByStage.round_of_32 ?? [],
+          matchesByStage.round_of_16 ?? []
+        ).map(enrichedR16Match)
       : activeKey === "final"
       ? [...(matchesByStage.final ?? [])].sort((a, b) => Number(a.id) - Number(b.id))
       : [...(matchesByStage[activeKey as keyof MatchesByStage] ?? [])].sort(

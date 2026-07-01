@@ -1,4 +1,4 @@
-import type { Match } from "@/types/api";
+import type { Match, Team } from "@/types/api";
 
 // Official 2026 World Cup bracket draw for round of 32.
 // Each entry pairs two matches whose winners meet in the same round of 16 match.
@@ -20,6 +20,39 @@ const R32_BRACKET_PAIRS: [[string, string], [string, string]][] = [
 function matchHasCodes(match: Match, pair: [string, string]): boolean {
   const codes = new Set([match.home_team.code, match.away_team.code]);
   return pair.every((c) => codes.has(c));
+}
+
+export function getMatchWinner(match: Match): Team | null {
+  if (match.status !== "finished") return null;
+  if (match.home_score === null || match.away_score === null) return null;
+  const hasPenalties = match.penalties_home !== null && match.penalties_away !== null;
+  if (hasPenalties) {
+    return match.penalties_home! > match.penalties_away! ? match.home_team : match.away_team;
+  }
+  if (match.home_score > match.away_score) return match.home_team;
+  if (match.away_score > match.home_score) return match.away_team;
+  return null;
+}
+
+// Each R16 slot maps two R32 feeder matches to one R16 match.
+// r32Home: winner becomes home team in R16
+// r32Away: winner becomes away team in R16
+export interface R16Slot {
+  r16Match: Match | null;
+  r32Home: Match | null;
+  r32Away: Match | null;
+}
+
+// Builds 8 R16 slots from available R32 and R16 matches.
+// Slots that have no API match yet get r16Match = null.
+export function buildR16Slots(r32Matches: Match[], r16Matches: Match[]): R16Slot[] {
+  const orderedR32 = orderR32ByBracket(r32Matches);
+  const sortedR16 = [...r16Matches].sort((a, b) => Number(a.id) - Number(b.id));
+  return Array.from({ length: 8 }, (_, i) => ({
+    r16Match: sortedR16[i] ?? null,
+    r32Home: orderedR32[i * 2] ?? null,
+    r32Away: orderedR32[i * 2 + 1] ?? null,
+  }));
 }
 
 /**
