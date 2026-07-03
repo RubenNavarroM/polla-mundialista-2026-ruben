@@ -25,34 +25,39 @@ function parseStatus(status: string): MatchStatus {
   return "scheduled"; // TIMED, SCHEDULED, etc.
 }
 
-// Returns the goal score excluding penalty shootout goals.
-// football-data.org v4 can include penalty goals in score.fullTime for
-// PENALTY_SHOOTOUT matches. We always want the score at the end of
-// regular time or extra time — never the penalty tally.
+// Returns the goal score at the end of the 90 regulation minutes only.
+// Predictions are always scored against regulation time — extra time and
+// penalty shootout goals never count, even when a match went past 90'.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractGoalScore(score: any): { home: number | null; away: number | null } {
   const duration = (score?.duration ?? "REGULAR").toUpperCase();
 
+  // Matches decided in extra time or on penalties: score.regularTime holds
+  // the exact goal tally at the end of the 90 regulation minutes.
+  if (duration !== "REGULAR" && score?.regularTime?.home != null) {
+    return {
+      home: score.regularTime.home ?? 0,
+      away: score.regularTime.away ?? 0,
+    };
+  }
+
   if (duration === "PENALTY_SHOOTOUT") {
-    // Preferred: explicit regularTime + extraTime fields (v4 when available)
-    if (score?.regularTime?.home != null) {
-      return {
-        home: (score.regularTime.home ?? 0) + (score.extraTime?.home ?? 0),
-        away: (score.regularTime.away ?? 0) + (score.extraTime?.away ?? 0),
-      };
-    }
-    // Fallback: subtract penalty goals from fullTime if the API bundled them in
+    // Fallback when regularTime isn't provided: strip penalty and extra
+    // time goals from fullTime to isolate the 90-minute score.
     if (score?.penalties?.home != null) {
-      const adjHome = (score.fullTime?.home ?? 0) - (score.penalties.home ?? 0);
-      const adjAway = (score.fullTime?.away ?? 0) - (score.penalties.away ?? 0);
-      // Safety: only use if result is non-negative (i.e. penaltis were actually bundled in)
+      const adjHome =
+        (score.fullTime?.home ?? 0) - (score.penalties.home ?? 0) - (score.extraTime?.home ?? 0);
+      const adjAway =
+        (score.fullTime?.away ?? 0) - (score.penalties.away ?? 0) - (score.extraTime?.away ?? 0);
+      // Safety: only use if result is non-negative
       if (adjHome >= 0 && adjAway >= 0) {
         return { home: adjHome, away: adjAway };
       }
     }
   }
 
-  // REGULAR or EXTRA_TIME: fullTime already holds the correct goal count
+  // REGULAR duration (or no better data available): fullTime is the
+  // 90-minute result.
   return {
     home: score?.fullTime?.home ?? null,
     away: score?.fullTime?.away ?? null,
