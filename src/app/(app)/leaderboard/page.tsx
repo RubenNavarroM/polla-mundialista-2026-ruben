@@ -6,7 +6,8 @@ import { GroupMiniRanking } from "@/components/GroupMiniRanking";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import type { UserScore } from "@/lib/points";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface GroupRanking {
   groupId: string;
